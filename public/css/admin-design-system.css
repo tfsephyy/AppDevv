@@ -1,0 +1,421 @@
+/* MindEase Admin Design System */
+/* Unified styles for consistent UI across all admin pages */
+
+:root {
+    --primary: #1a3c5e;
+    --secondary: #2a5c8a;
+    --accent: #4a90e2;
+    --accent-light: #6bb3ff;
+    --accent-dark: #1e5f99;
+    --text: #e6f0f7;
+    --text-muted: #b8d0e0;
+    --card-bg: rgba(255, 255, 255, 0.1);
+    --glass: rgba(255, 255, 255, 0.15);
+    --sidebar-bg: #0f3a1a;
+    --radius: 12px;
+    --transition: all 0.3s ease;
+    
+    /* Action Button Colors */
+    --color-view: #3498db;
+    --color-view-bg: rgba(52, 152, 219, 0.2);
+    --color-view-hover: rgba(52, 152, 219, 0.3);
+    
+    --color-edit: #2ecc71;
+    --color-edit-bg: rgba(46, 204, 113, 0.2);
+    --color-edit-hover: rgba(46, 204, 113, 0.3);
+    
+    --color-archive: #e67e22;
+    --color-archive-bg: rgba(230, 126, 34, 0.2);
+    --color-archive-hover: rgba(230, 126, 34, 0.3);
+    
+    --color-delete: #e74c3c;
+    --color-delete-bg: rgba(231, 76, 60, 0.2);
+    --color-delete-hover: rgba(231, 76, 60, 0.3);
+    
+    --color-done: #2ecc71;
+    --color-done-bg: rgba(46, 204, 113, 0.2);
+    --color-done-hover: rgba(46, 204, 113, 0.3);
+    
+    --color-unarchive: #2ecc71;
+    --color-unarchive-bg: rgba(46, 204, 113, 0.2);
+    --color-unarchive-hover: rgba(46, 204, 113, 0.3);
+}
+
+/* Standardized Action Buttons - Icon Style */
+.btn-action {
+    width: 35px;
+    height: 35px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    font-size: 14px;
+}
+
+.btn-action.view {
+    background: var(--color-view-bg);
+    color: var(--color-view);
+}
+
+.btn-action.view:hover {
+    background: var(--color-view-hover);
+    transform: translateY(-2px);
+}
+
+.btn-action.edit {
+    background: var(--color-edit-bg);
+    color: var(--color-edit);
+}
+
+.btn-action.edit:hover {
+    background: var(--color-edit-hover);
+    transform: translateY(-2px);
+}
+
+.btn-action.archive {
+    background: var(--color-archive-bg);
+    color: var(--color-archive);
+}
+
+.btn-action.archive:hover {
+    background: var(--color-archive-hover);
+    transform: translateY(-2px);
+}
+
+.btn-action.delete {
+    background: var(--color-delete-bg);
+    color: var(--color-delete);
+}
+
+.btn-action.delete:hover {
+    background: var(--color-delete-hover);
+    transform: translateY(-2px);
+}
+
+.btn-action.unarchive {
+    background: var(--color-unarchive-bg);
+    color: var(--color-unarchive);
+}
+
+.btn-action.unarchive:hover {
+    background: var(--color-unarchive-hover);
+    transform: translateY(-2px);
+}
+
+.btn-action.done {
+    background: var(--color-done-bg);
+    color: var(--color-done);
+}
+
+.btn-action.done:hover {
+    background: var(--color-done-hover);
+    transform: translateY(-2px);
+}
+
+/* Ensure white text for all icons */
+.btn-action i {
+    color: inherit;
+}
+
+/* Standardized Action Buttons - Text Style */
+.action-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.action-btn.view-btn,
+.view-btn {
+    background: var(--color-view-bg);
+    color: var(--color-view);
+}
+
+.action-btn.view-btn:hover,
+.view-btn:hover {
+    background: var(--color-view-hover);
+    transform: translateY(-1px);
+}
+
+.action-btn.edit-btn,
+.edit-btn {
+    background: var(--color-edit-bg);
+    color: var(--color-edit);
+}
+
+.action-btn.edit-btn:hover,
+.edit-btn:hover {
+    background: var(--color-edit-hover);
+    transform: translateY(-1px);
+}
+
+.action-btn.archive-btn,
+.archive-btn {
+    background: var(--color-archive-bg);
+    color: var(--color-archive);
+}
+
+.action-btn.archive-btn:hover,
+.archive-btn:hover {
+    background: var(--color-archive-hover);
+    transform: translateY(-1px);
+}
+
+.action-btn.done-btn,
+.done-btn {
+    background: var(--color-done-bg);
+    color: var(--color-done);
+}
+
+.action-btn.done-btn:hover,
+.done-btn:hover {
+    background: var(--color-done-hover);
+    transform: translateY(-1px);
+}
+
+.action-btn.delete-btn,
+.delete-btn {
+    background: var(--color-delete-bg);
+    color: var(--color-delete);
+}
+
+.action-btn.delete-btn:hover,
+.delete-btn:hover {
+    background: var(--color-delete-hover);
+    transform: translateY(-1px);
+}
+
+.action-btn.unarchive-btn,
+.unarchive-btn {
+    background: var(--color-unarchive-bg);
+    color: var(--color-unarchive);
+}
+
+.action-btn.unarchive-btn:hover,
+.unarchive-btn:hover {
+    background: var(--color-unarchive-hover);
+    transform: translateY(-1px);
+}
+
+/* Action Buttons Container */
+.action-buttons-cell {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.status-upcoming {
+    background: var(--color-view-bg);
+    color: var(--color-view);
+}
+
+.status-completed {
+    background: var(--color-done-bg);
+    color: var(--color-done);
+}
+
+.status-cancelled {
+    background: var(--color-delete-bg);
+    color: var(--color-delete);
+}
+
+.status-active {
+    background: var(--color-edit-bg);
+    color: var(--color-edit);
+}
+
+.status-archived {
+    background: var(--color-archive-bg);
+    color: var(--color-archive);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text);
+    font-weight: 600;
+}
+
+p {
+    color: var(--text-muted);
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    text-align: left;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+td {
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text);
+}
+
+tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    opacity: 0.3;
+    color: var(--text-muted);
+}
+
+.empty-state h3 {
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: var(--text);
+}
+
+.empty-state p {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+/* Cards */
+.card {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px;
+}
+
+/* Modals */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    border-radius: var(--radius);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Primary Buttons */
+.btn-primary {
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 14px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+}
+
+/* Secondary Buttons */
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 14px;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+/* Inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="time"],
+input[type="number"],
+textarea,
+select {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}

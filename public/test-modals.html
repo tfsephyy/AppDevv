@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: #2a2a2a;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            font-size: 20px;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.3s;
+            line-height: 1;
+        }
+        
+        .close-modal:hover {
+            color: white;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            background: #333;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Modal Close Button Test</h1>
+    
+    <div class="test-buttons">
+        <button class="btn btn-primary" onclick="openModal1()">Open Add Modal</button>
+        <button class="btn btn-primary" onclick="openModal2()">Open View Modal</button>
+        <button class="btn btn-primary" onclick="openModal3()">Open Edit Modal</button>
+        <button class="btn btn-primary" onclick="openModal4()">Open History Modal</button>
+        <button class="btn btn-primary" onclick="openModal5()">Open Details Modal</button>
+    </div>
+    
+    <div class="status" id="status">
+        Status: Ready
+    </div>
+    
+    <!-- Add Modal -->
+    <div class="modal" id="addSessionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Counseling Session</h2>
+                <button class="close-modal" onclick="closeModals()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>This is the Add Session modal content.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary close-modal" onclick="closeModals()">Cancel</button>
+                <button type="button" class="btn btn-primary">Add Session</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- View Modal -->
+    <div class="modal" id="viewSessionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Session Details</h2>
+                <button class="close-modal" onclick="closeModals()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>This is the View Session modal content.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary close-modal" onclick="closeModals()">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Modal -->
+    <div class="modal" id="editSessionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Counseling Session</h2>
+                <button class="close-modal" onclick="closeModals()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>This is the Edit Session modal content.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModals()">Close</button>
+                <button type="button" class="btn btn-primary">Update</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- History Modal -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Session History</h2>
+                <button class="close-modal" onclick="closeHistoryModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>This is the History modal content.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeHistoryModal()">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Session Details Modal -->
+    <div class="modal" id="sessionDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Session Details</h2>
+                <button class="close-modal" onclick="closeSessionDetailsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>This is the Session Details modal content.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeSessionDetailsModal()">Close</button>
+                <button type="button" class="btn btn-primary">Update</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Log function for debugging
+        function log(message) {
+            const status = document.getElementById('status');
+            status.textContent = 'Status: ' + message;
+            console.log(message);
+        }
+        
+        // Open modals
+        function openModal1() {
+            document.getElementById('addSessionModal').style.display = 'flex';
+            log('Opened Add Session Modal');
+        }
+        
+        function openModal2() {
+            document.getElementById('viewSessionModal').style.display = 'flex';
+            log('Opened View Session Modal');
+        }
+        
+        function openModal3() {
+            document.getElementById('editSessionModal').style.display = 'flex';
+            log('Opened Edit Session Modal');
+        }
+        
+        function openModal4() {
+            document.getElementById('historyModal').style.display = 'flex';
+            log('Opened History Modal');
+        }
+        
+        function openModal5() {
+            document.getElementById('sessionDetailsModal').style.display = 'flex';
+            log('Opened Session Details Modal');
+        }
+        
+        // Close all modals
+        function closeModals() {
+            log('closeModals() called');
+            document.getElementById('addSessionModal').style.display = 'none';
+            document.getElementById('viewSessionModal').style.display = 'none';
+            document.getElementById('editSessionModal').style.display = 'none';
+            
+            const historyModal = document.getElementById('historyModal');
+            if (historyModal) historyModal.style.display = 'none';
+            
+            const sessionDetailsModal = document.getElementById('sessionDetailsModal');
+            if (sessionDetailsModal) sessionDetailsModal.style.display = 'none';
+            
+            log('All modals closed');
+        }
+        
+        // Close history modal
+        function closeHistoryModal() {
+            log('closeHistoryModal() called');
+            const historyModal = document.getElementById('historyModal');
+            if (historyModal) {
+                historyModal.style.display = 'none';
+                log('History Modal closed');
+            }
+        }
+        
+        // Close session details modal
+        function closeSessionDetailsModal() {
+            log('closeSessionDetailsModal() called');
+            const sessionDetailsModal = document.getElementById('sessionDetailsModal');
+            if (sessionDetailsModal) {
+                sessionDetailsModal.style.display = 'none';
+                log('Session Details Modal closed');
+            }
+        }
+        
+        // Initialize close modal buttons after DOM loads
+        document.addEventListener('DOMContentLoaded', function() {
+            log('DOM Content Loaded - Attaching event listeners');
+            document.querySelectorAll('.close-modal').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    log('Close button clicked via event listener');
+                    closeModals();
+                });
+            });
+            log('Event listeners attached to ' + document.querySelectorAll('.close-modal').length + ' close buttons');
+        });
+    </script>
+</body>
+</html>
