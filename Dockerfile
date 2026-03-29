@@ -1,19 +1,36 @@
 FROM php:8.2-cli
 
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    unzip curl git libzip-dev zip
+    unzip curl git libzip-dev zip libpng-dev libonig-dev libxml2-dev
 
-RUN docker-php-ext-install pdo pdo_mysql zip
+# Install PHP extensions
+RUN docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl
 
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /app
+# Set working directory
+WORKDIR /var/www
+
+# Copy files
 COPY . .
 
-RUN cp .env.example .env \
-    && composer install \
-    && php artisan key:generate \
-    && sed -i 's/APP_DEBUG=false/APP_DEBUG=true/' .env
-    && chmod -R 775 storage bootstrap/cache
+# Install Laravel dependencies (SAFE during build)
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
-CMD php artisan serve --host=0.0.0.0 --port=$PORT
+# Fix permissions
+RUN chmod -R 775 storage bootstrap/cache
+
+# Expose port
+EXPOSE 10000
+
+# Start app (DO ALL risky stuff here)
+CMD cp .env.example .env \
+    && php artisan key:generate \
+    && php artisan config:clear \
+    && php artisan cache:clear \
+    && php artisan route:clear \
+    && php artisan view:clear \
+    && php artisan migrate --force || true \
+    && php artisan serve --host=0.0.0.0 --port=$PORT
