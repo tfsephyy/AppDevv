@@ -25,7 +25,7 @@
 
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
+            background: linear-gradient(135deg, rgba(26, 60, 94, 0.95), rgba(42, 92, 138, 0.95));
             color: var(--text);
             line-height: 1.5;
             height: 100vh;
@@ -222,9 +222,45 @@
             margin-bottom: 25px;
         }
 
+        .tab-reload-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 13px;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-right: 12px;
+        }
+
+        .tab-reload-btn:hover {
+            background: var(--glass);
+            color: var(--accent);
+        }
+
+        .tab-reload-btn i {
+            font-size: 13px;
+            transition: transform 0.5s ease;
+        }
+
+        .tab-reload-btn.spinning i {
+            animation: spin 0.6s linear;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
         .content-tabs {
             display: flex;
             gap: 10px;
+            position: relative;
+            z-index: 100;
         }
 
         .tab-btn {
@@ -236,6 +272,9 @@
             cursor: pointer;
             transition: var(--transition);
             font-size: 14px;
+            position: relative;
+            z-index: 10;
+            pointer-events: auto;
         }
 
         .tab-btn:hover {
@@ -422,6 +461,40 @@
             border-radius: 12px;
             font-size: 12px;
             margin-left: 10px;
+        }
+
+        /* Mobile adjustments: tighten button spacing and sizes */
+        @media (max-width: 768px) {
+            .journal-actions {
+                gap: 6px;
+            }
+
+            .action-btn {
+                width: 36px;
+                height: 36px;
+                border-radius: 6px;
+                padding: 0;
+            }
+
+            .tab-btn {
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+
+            .tab-reload-btn {
+                margin-right: 10px;
+                padding: 6px 8px;
+                font-size: 13px;
+            }
+
+            .see-more-btn {
+                font-size: 13px;
+            }
+
+            .public-journal-actions .action-button {
+                padding: 6px 8px;
+                font-size: 13px;
+            }
         }
 
         .empty-state {
@@ -618,6 +691,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: relative;
+            z-index: 10;
         }
 
         .reload-btn {
@@ -629,6 +704,9 @@
             border-radius: 4px;
             transition: var(--transition);
             font-size: 14px;
+            position: relative;
+            z-index: 10;
+            pointer-events: auto;
         }
 
         .reload-btn:hover {
@@ -911,6 +989,23 @@
             background: var(--accent);
             border-radius: 3px;
         }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .journal-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto;
+            }
+
+            .journal-main {
+                order: 1;
+            }
+
+            .public-journal-sidebar {
+                order: 2;
+                max-height: 600px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -933,6 +1028,9 @@
                             <button class="tab-btn" data-tab="my-journals">My Journals</button>
                             <button class="tab-btn" data-tab="archive">Archive</button>
                         </div>
+                        <button class="tab-reload-btn" id="tabReloadBtn" title="Reload current section">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
                     </div>
 
             <!-- Write Section -->
@@ -1042,82 +1140,194 @@
         </div>
     </div>
 
-    <!-- Edit Modal -->
-    <div class="modal" id="editModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Edit Journal</h2>
-                <button class="close-modal">&times;</button>
-            </div>
-            <form id="editForm">
-                <div class="modal-body">
-                    <input type="hidden" id="editJournalId">
-                    <div class="form-group">
-                        <label for="editTitle">Title</label>
-                        <input type="text" id="editTitle" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="editContent">Content</label>
-                        <textarea id="editContent" class="form-control" rows="10" required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary close-modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
+
 
     <script>
-        // Tab switching
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        const writeSection = document.getElementById('writeSection');
-        const myJournalsSection = document.getElementById('myJournalsSection');
-        const archiveSection = document.getElementById('archiveSection');
+        // Global variables
+        let selectedImages = [];
+        
+        // All initialization in a single DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing journal page...');
+            
+            // Tab switching
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const writeSection = document.getElementById('writeSection');
+            const myJournalsSection = document.getElementById('myJournalsSection');
+            const archiveSection = document.getElementById('archiveSection');
 
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tab = btn.getAttribute('data-tab');
-                tabBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+            // Reload button — refreshes content of the active tab
+            const tabReloadBtn = document.getElementById('tabReloadBtn');
+            if (tabReloadBtn) {
+                tabReloadBtn.addEventListener('click', async function() {
+                    this.classList.add('spinning');
+                    setTimeout(() => this.classList.remove('spinning'), 600);
+                    const activeTab = document.querySelector('.tab-btn.active')?.getAttribute('data-tab');
+                    if (activeTab === 'my-journals') await loadMyJournals();
+                    else if (activeTab === 'archive') await loadArchive();
+                });
+            }
 
-                writeSection.style.display = tab === 'write' ? 'block' : 'none';
-                myJournalsSection.style.display = tab === 'my-journals' ? 'block' : 'none';
-                archiveSection.style.display = tab === 'archive' ? 'block' : 'none';
+            console.log('Tab buttons found:', tabBtns.length);
+            console.log('Sections:', { write: !!writeSection, myJournals: !!myJournalsSection, archive: !!archiveSection });
 
-                if (tab === 'archive') {
-                    loadArchive();
+            // Attach tab click handlers
+            tabBtns.forEach((btn, index) => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const tab = this.getAttribute('data-tab');
+                    console.log('Tab clicked:', tab);
+                    
+                    // Update active state
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Show/hide sections
+                    if (writeSection) writeSection.style.display = tab === 'write' ? 'block' : 'none';
+                    if (myJournalsSection) {
+                        myJournalsSection.style.display = tab === 'my-journals' ? 'block' : 'none';
+                        if (tab === 'my-journals') loadMyJournals();
+                    }
+                    if (archiveSection) {
+                        archiveSection.style.display = tab === 'archive' ? 'block' : 'none';
+                        if (tab === 'archive') loadArchive();
+                    }
+                });
+            });
+
+            // Image upload handling
+            const imageInput = document.getElementById('imageInput');
+            const imagePreviewGrid = document.getElementById('imagePreviewGrid');
+
+            if (imageInput && imagePreviewGrid) {
+                imageInput.addEventListener('change', (e) => {
+                    const files = Array.from(e.target.files);
+                    files.forEach(file => {
+                        selectedImages.push(file);
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const div = document.createElement('div');
+                            div.className = 'image-preview-item';
+                            div.innerHTML = `
+                                <img src="${e.target.result}" alt="Preview">
+                                <button type="button" class="remove-image-btn" onclick="removeImage(${selectedImages.length - 1})">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            `;
+                            imagePreviewGrid.appendChild(div);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+            }
+
+            // Save journal form
+            const journalForm = document.getElementById('journalForm');
+            if (journalForm) {
+                journalForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const title = document.getElementById('title').value.trim();
+                    const content = document.getElementById('content').value.trim();
+                    const isPublic = document.getElementById('makePublic').checked;
+
+                    if (!title) {
+                        showToast('Please enter a title', 'error');
+                        return;
+                    }
+                    if (!content) {
+                        showToast('Please enter content', 'error');
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('title', title);
+                    formData.append('content', content);
+                    formData.append('is_public', isPublic ? '1' : '0');
+                    
+                    selectedImages.forEach((image, index) => {
+                        formData.append(`images[${index}]`, image);
+                    });
+
+                    const submitBtn = e.target.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+                    try {
+                        const response = await fetch('/user/journal', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: formData
+                        });
+
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            showToast('Journal saved successfully!', 'success');
+                            document.getElementById('title').value = '';
+                            document.getElementById('content').value = '';
+                            document.getElementById('makePublic').checked = false;
+                            selectedImages = [];
+                            if (imagePreviewGrid) imagePreviewGrid.innerHTML = '';
+                            
+                            // Automatically refresh public journals if made public
+                            if (isPublic) {
+                                refreshPublicJournals();
+                            }
+                            
+                            // Automatically switch to My Journals and refresh
+                            const myJournalsTab = document.querySelector('[data-tab="my-journals"]');
+                            if (myJournalsTab) {
+                                myJournalsTab.click();
+                            }
+                            
+                            // Auto-refresh journals list to show the new journal
+                            setTimeout(() => {
+                                loadMyJournals();
+                            }, 100);
+                        } else {
+                            showToast(data.message || 'Error saving journal', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error saving journal:', error);
+                        showToast('Error saving journal. Please try again.', 'error');
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                });
+            }
+
+
+
+            // Load public journals
+            loadPublicJournals();
+
+            setTimeout(() => {
+                const container = document.getElementById('publicJournalsContainer');
+                if (container && container.innerHTML.includes('Loading public journals')) {
+                    loadPublicJournals(true);
+                }
+            }, 5000);
+
+            // Enter key support for comment inputs
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.target.classList.contains('comment-input')) {
+                    e.preventDefault();
+                    const journalId = e.target.id.replace('comment-input-', '');
+                    addComment(journalId);
                 }
             });
         });
 
-        // Image upload handling
-        let selectedImages = [];
-        const imageInput = document.getElementById('imageInput');
-        const imagePreviewGrid = document.getElementById('imagePreviewGrid');
-
-        imageInput.addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            files.forEach(file => {
-                selectedImages.push(file);
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const div = document.createElement('div');
-                    div.className = 'image-preview-item';
-                    div.innerHTML = `
-                        <img src="${e.target.result}" alt="Preview">
-                        <button type="button" class="remove-image-btn" onclick="removeImage(${selectedImages.length - 1})">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    `;
-                    imagePreviewGrid.appendChild(div);
-                };
-                reader.readAsDataURL(file);
-            });
-        });
-
+        // Function declarations (available globally)
         function removeImage(index) {
+            const imagePreviewGrid = document.getElementById('imagePreviewGrid');
             selectedImages.splice(index, 1);
             imagePreviewGrid.innerHTML = '';
             selectedImages.forEach((file, idx) => {
@@ -1137,62 +1347,21 @@
             });
         }
 
-        // Save journal
-        document.getElementById('journalForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const title = document.getElementById('title').value;
-            const content = document.getElementById('content').value;
-            const isPublic = document.getElementById('makePublic').checked;
-
-            const formData = new FormData();
-            formData.append('title', title);
-            formData.append('content', content);
-            formData.append('is_public', isPublic ? '1' : '0');
-            
-            selectedImages.forEach((image, index) => {
-                formData.append(`images[${index}]`, image);
-            });
-
-            try {
-                const response = await fetch('/user/journal', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: formData
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    showNotification('Journal saved successfully!', 'success');
-                    document.getElementById('title').value = '';
-                    document.getElementById('content').value = '';
-                    document.getElementById('makePublic').checked = false;
-                    selectedImages = [];
-                    imagePreviewGrid.innerHTML = '';
-                    
-                    // If journal was made public, refresh the public journals section
-                    if (isPublic) {
-                        refreshPublicJournals();
-                    }
-                    
-                    // Reload page after a short delay to show changes
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1500);
-                }
-            } catch (error) {
-                console.error('Error saving journal:', error);
-                showNotification('Error saving journal. Please try again.', 'error');
-            }
-        });
-
         // Toggle content
         function toggleContent(id) {
             const preview = document.getElementById('preview-' + id);
-            const btn = event.target;
+            if (!preview) {
+                console.error('Preview element not found for id:', id);
+                return;
+            }
+            
+            const card = preview.closest('.journal-card');
+            const btn = card ? card.querySelector('.see-more-btn') : null;
+            
+            if (!btn) {
+                console.error('See more button not found');
+                return;
+            }
             
             if (preview.classList.contains('expanded')) {
                 preview.classList.remove('expanded');
@@ -1204,66 +1373,10 @@
         }
 
         // Edit journal
-        const editModal = document.getElementById('editModal');
-        const closeModalBtns = document.querySelectorAll('.close-modal');
 
-        closeModalBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                editModal.style.display = 'none';
-            });
-        });
 
-        // Function to edit journal
-        async function editJournal(id) {
-            // Get journal data and populate modal
-            try {
-                const response = await fetch(`/user/journal/${id}`);
-                const journal = await response.json();
-                
-                document.getElementById('editTitle').value = journal.title;
-                document.getElementById('editContent').value = journal.content;
-                document.getElementById('editJournalId').value = id;
-                
-                editModal.style.display = 'flex';
-            } catch (error) {
-                console.error('Error loading journal:', error);
-                showNotification('Error loading journal for editing.', 'error');
-            }
-        }
-
-        // Save edited journal
-        document.getElementById('saveEditBtn').addEventListener('click', async () => {
-            const id = document.getElementById('editJournalId').value;
-            const title = document.getElementById('editTitle').value;
-            const content = document.getElementById('editContent').value;
-
-            try {
-                const response = await fetch(`/user/journal/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify({ title, content })
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    showNotification('Journal updated successfully!', 'success');
-                    editModal.style.display = 'none';
-                    location.reload();
-                }
-            } catch (error) {
-                console.error('Error updating journal:', error);
-                showNotification('Error updating journal. Please try again.', 'error');
-            }
-        });
-
-        // View journal (for future expansion - currently not needed as content is shown)
+        // View journal
         function viewJournal(id) {
-            // This function is reserved for future modal/detail view
-            // For now, journals are displayed inline
             console.log('View journal:', id);
         }
 
@@ -1271,15 +1384,12 @@
         async function archiveJournal(id) {
             console.log('archiveJournal called with id:', id);
             try {
-                console.log('Archive button clicked for journal:', id);
                 const confirmed = await showConfirmModal('Archive Journal', 'Are you sure you want to archive this journal?', 'Archive');
-                console.log('Modal result:', confirmed);
                 if (!confirmed) {
                     console.log('User cancelled archive');
                     return;
                 }
 
-                console.log('User confirmed archive, making API call...');
                 const response = await fetch(`/user/journal/${id}/archive`, {
                     method: 'POST',
                     headers: {
@@ -1288,19 +1398,53 @@
                     }
                 });
 
-                console.log('API response:', response.status, response.ok);
                 if (response.ok) {
-                    showNotification('Journal archived successfully!', 'success');
-                    console.log('About to reload page after archive');
-                    location.reload();
+                    const data = await response.json();
+                    showToast('Journal archived successfully!', 'success');
+                    
+                    // Automatically remove from view with smooth animation
+                    const journalCard = document.querySelector(`[data-journal-id="${id}"]`);
+                    if (journalCard) {
+                        journalCard.style.transition = 'all 0.4s ease';
+                        journalCard.style.opacity = '0';
+                        journalCard.style.transform = 'translateX(-30px) scale(0.95)';
+                        journalCard.style.maxHeight = journalCard.offsetHeight + 'px';
+                        
+                        setTimeout(() => {
+                            journalCard.style.maxHeight = '0';
+                            journalCard.style.marginBottom = '0';
+                            journalCard.style.padding = '0';
+                        }, 200);
+                        
+                        setTimeout(() => {
+                            journalCard.remove();
+                            
+                            // Check if no journals left, show empty state
+                            const myJournalsSection = document.getElementById('myJournalsSection');
+                            if (myJournalsSection && myJournalsSection.children.length === 0) {
+                                myJournalsSection.innerHTML = `
+                                    <div class="empty-state">
+                                        <i class="fas fa-book"></i>
+                                        <h3>No Journals Yet</h3>
+                                        <p>Start writing your first journal entry!</p>
+                                    </div>
+                                `;
+                            }
+                        }, 600);
+                    }
+                    
+                    // Automatically refresh Archive tab in real-time so journal appears there immediately
+                    await loadArchive();
+                    
+                    // Automatically reload My Journals section after archiving
+                    await loadMyJournals();
                 } else {
-                    const errorData = await response.text();
-                    console.error('API error:', errorData);
-                    showNotification('Failed to archive journal', 'error');
+                    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    showToast(errorData.message || 'Failed to archive journal', 'error');
                 }
             } catch (error) {
                 console.error('Error in archiveJournal:', error);
-                showNotification('Error archiving journal', 'error');
+                showToast('Error archiving journal', 'error');
             }
         }
 
@@ -1321,16 +1465,29 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    showNotification(data.message, 'success');
-                    location.reload();
+                    showToast(data.message, 'success');
+                    
+                    // Update the badge on the journal card
+                    const journalCard = document.querySelector(`[data-journal-id="${id}"]`);
+                    if (journalCard) {
+                        const journalTitle = journalCard.querySelector('.journal-title');
+                        if (journalTitle && !journalTitle.querySelector('.posted-badge')) {
+                            const badge = document.createElement('span');
+                            badge.className = 'posted-badge';
+                            badge.innerHTML = '<i class="fas fa-check-circle"></i> Posted';
+                            journalTitle.appendChild(badge);
+                        }
+                    }
                 } else {
-                    showNotification('Failed to post journal', 'error');
+                    showToast('Failed to post journal', 'error');
                 }
             } catch (error) {
                 console.error('Error posting journal:', error);
-                showNotification('Error posting journal. Please try again.', 'error');
+                showToast('Error posting journal. Please try again.', 'error');
             }
-        }        // Load archive
+        }
+        
+        // Load archive
         async function loadArchive() {
             try {
                 const response = await fetch('/user/journal-archive');
@@ -1349,7 +1506,7 @@
                 }
 
                 archiveContent.innerHTML = journals.map(journal => `
-                    <div class="journal-card">
+                    <div class="journal-card" data-journal-id="${journal.id}">
                         <div class="journal-header">
                             <div>
                                 <div class="journal-title">${journal.title}</div>
@@ -1389,15 +1546,51 @@
                 });
 
                 if (response.ok) {
-                    showNotification('Journal unarchived successfully!', 'success');
-                    console.log('About to reload page after unarchive');
-                    location.reload();
+                    const data = await response.json();
+                    showToast('Journal unarchived successfully!', 'success');
+                    
+                    // Automatically remove from archive view with smooth animation
+                    // Scope to archiveContent to avoid matching My Journals cards with same ID
+                    const archiveSection = document.getElementById('archiveContent');
+                    const journalCard = archiveSection?.querySelector(`[data-journal-id="${id}"]`);
+                    if (journalCard) {
+                        journalCard.style.transition = 'all 0.4s ease';
+                        journalCard.style.opacity = '0';
+                        journalCard.style.transform = 'translateX(30px) scale(0.95)';
+                        journalCard.style.maxHeight = journalCard.offsetHeight + 'px';
+                        
+                        setTimeout(() => {
+                            journalCard.style.maxHeight = '0';
+                            journalCard.style.marginBottom = '0';
+                            journalCard.style.padding = '0';
+                        }, 200);
+                        
+                        setTimeout(() => {
+                            journalCard.remove();
+                            
+                            // Check if archive is empty now
+                            const archiveContent = document.getElementById('archiveContent');
+                            if (archiveContent && archiveContent.children.length === 0) {
+                                archiveContent.innerHTML = `
+                                    <div class="empty-state">
+                                        <i class="fas fa-archive"></i>
+                                        <h3>No Archived Journals</h3>
+                                        <p>Archived journals will appear here.</p>
+                                    </div>
+                                `;
+                            }
+                        }, 600);
+                    }
+                    
+                    // Automatically refresh My Journals tab in real-time so journal appears there immediately
+                    await loadMyJournals();
                 } else {
-                    showNotification('Failed to unarchive journal', 'error');
+                    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    showToast(errorData.message || 'Failed to unarchive journal', 'error');
                 }
             } catch (error) {
                 console.error('Error unarchiving journal:', error);
-                showNotification('Error unarchiving journal', 'error');
+                showToast('Error unarchiving journal', 'error');
             }
         }
 
@@ -1418,15 +1611,48 @@
                 });
 
                 if (response.ok) {
-                    showNotification('Journal deleted successfully!', 'success');
-                    console.log('About to reload page after delete');
-                    location.reload();
+                    const data = await response.json();
+                    showToast('Journal deleted successfully!', 'success');
+                    
+                    // Automatically remove from view with smooth animation
+                    const journalCard = document.querySelector(`[data-journal-id="${id}"]`);
+                    if (journalCard) {
+                        journalCard.style.transition = 'all 0.4s ease';
+                        journalCard.style.opacity = '0';
+                        journalCard.style.transform = 'scale(0.9) rotateX(10deg)';
+                        journalCard.style.maxHeight = journalCard.offsetHeight + 'px';
+                        
+                        setTimeout(() => {
+                            journalCard.style.maxHeight = '0';
+                            journalCard.style.marginBottom = '0';
+                            journalCard.style.padding = '0';
+                        }, 200);
+                        
+                        setTimeout(() => {
+                            // Identify the actual parent section before removing the card
+                            const parentSection = journalCard.closest('#archiveContent') || journalCard.closest('#myJournalsSection');
+                            journalCard.remove();
+                            
+                            // Check if the section is now empty and show empty state
+                            if (parentSection && parentSection.querySelectorAll('.journal-card').length === 0) {
+                                const isArchive = parentSection.id === 'archiveContent';
+                                parentSection.innerHTML = `
+                                    <div class="empty-state">
+                                        <i class="fas fa-${isArchive ? 'archive' : 'book'}"></i>
+                                        <h3>${isArchive ? 'No Archived Journals' : 'No Journals Yet'}</h3>
+                                        <p>${isArchive ? 'Archived journals will appear here.' : 'Start writing your first journal entry!'}</p>
+                                    </div>
+                                `;
+                            }
+                        }, 600);
+                    }
                 } else {
-                    showNotification('Failed to delete journal', 'error');
+                    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    showToast(errorData.message || 'Failed to delete journal', 'error');
                 }
             } catch (error) {
                 console.error('Error deleting journal:', error);
-                showNotification('Error deleting journal', 'error');
+                showToast('Error deleting journal', 'error');
             }
         }
 
@@ -1549,6 +1775,22 @@
 
         // Toggle journal public status
         async function toggleJournalPublic(journalId, event) {
+            // Disable the button immediately to prevent double-clicks
+            const button = event?.target?.closest('.action-btn');
+
+            // Determine current state from the button title to build the right prompt
+            const isMakingPublic = button?.title === 'Make Public';
+            const confirmTitle = isMakingPublic ? 'Make Journal Public' : 'Make Journal Private';
+            const confirmMessage = isMakingPublic
+                ? 'Are you sure you want to make this journal public? Everyone will be able to see it.'
+                : 'Are you sure you want to make this journal private? It will no longer be visible to others.';
+            const confirmLabel = isMakingPublic ? 'Make Public' : 'Make Private';
+
+            const confirmed = await showConfirmModal(confirmTitle, confirmMessage, confirmLabel);
+            if (!confirmed) return;
+
+            if (button) button.disabled = true;
+
             try {
                 const response = await fetch(`/user/journal/${journalId}/toggle-public`, {
                     method: 'POST',
@@ -1560,55 +1802,46 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    showNotification(data.message, 'success');
+                    showToast(data.message, 'success');
                     
-                    // Update the button icon and tooltip for this specific journal
-                    const button = event.target.closest('.action-btn');
-                    if (button) {
-                        const icon = button.querySelector('i');
-                        const newIcon = data.is_public ? 'globe' : 'lock';
-                        const newTitle = data.is_public ? 'Make Private' : 'Make Public';
-                        icon.className = `fas fa-${newIcon}`;
-                        button.title = newTitle;
-                    }
+                    // Reload My Journals to reflect updated public/private state reliably
+                    await loadMyJournals();
                     
-                    // Update the status badge in the journal header
-                    const journalCard = button.closest('.journal-card');
-                    if (journalCard) {
-                        const statusBadgeContainer = journalCard.querySelector('.journal-header > div:first-child');
-                        if (statusBadgeContainer) {
-                            // Remove existing badge
-                            const existingBadge = statusBadgeContainer.querySelector('.posted-badge');
-                            if (existingBadge) {
-                                existingBadge.remove();
-                            }
-                            
-                            // Add new badge if public
-                            if (data.is_public) {
-                                const newBadge = document.createElement('span');
-                                newBadge.className = 'posted-badge';
-                                newBadge.style.cssText = 'background: #27ae60; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; text-align: center; min-width: 80px; border: 1px solid #27ae60;';
-                                newBadge.innerHTML = '<i class="fas fa-globe" style="color: #fff; margin-right: 6px;"></i><span style="width:100%;text-align:center; color: #fff;">Public</span>';
-                                statusBadgeContainer.appendChild(newBadge);
-                            }
-                        }
-                    }
-                    
-                    // Refresh public journals section immediately
+                    // Refresh public journals sidebar
                     await refreshPublicJournals();
+                } else {
+                    showToast(data.message || 'Error updating journal visibility', 'error');
+                    if (button) button.disabled = false;
                 }
             } catch (error) {
                 console.error('Error toggling public status:', error);
-                showNotification('Error toggling public status', 'error');
+                showToast('Error toggling public status', 'error');
+                if (button) button.disabled = false;
             }
         }
 
         // Like public journal
         async function likePublicJournal(journalId) {
             try {
+                // Scope to publicJournalsContainer to avoid matching My Journals cards with the same ID
+                const container = document.getElementById('publicJournalsContainer');
+                const journalCard = container?.querySelector(`[data-journal-id="${journalId}"]`);
+                const likeBtn = journalCard?.querySelector('.action-button');
+                const likeCount = journalCard?.querySelector(`#like-count-${journalId}`);
+                
+                // Instant visual feedback - scale animation
+                if (likeBtn) {
+                    likeBtn.style.transform = 'scale(1.2)';
+                    likeBtn.style.transition = 'transform 0.2s ease';
+                    setTimeout(() => {
+                        likeBtn.style.transform = 'scale(1)';
+                    }, 200);
+                }
+                
                 const response = await fetch(`/user/journal/${journalId}/like`, {
                     method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     }
                 });
@@ -1616,19 +1849,30 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    const likeBtn = event.target.closest('.action-button');
-                    const likeCount = document.getElementById(`like-count-${journalId}`);
-                    
-                    if (data.liked) {
-                        likeBtn.classList.add('liked');
-                    } else {
-                        likeBtn.classList.remove('liked');
+                    // Real-time update: Update button state and count immediately
+                    if (journalCard) {
+                        if (data.liked) {
+                            likeBtn?.classList.add('liked');
+                        } else {
+                            likeBtn?.classList.remove('liked');
+                        }
+                        
+                        if (likeCount) {
+                            // Smooth count transition
+                            likeCount.style.transition = 'all 0.3s ease';
+                            likeCount.style.transform = 'scale(1.3)';
+                            likeCount.textContent = data.likes_count || 0;
+                            setTimeout(() => {
+                                likeCount.style.transform = 'scale(1)';
+                            }, 300);
+                        }
                     }
-                    
-                    likeCount.textContent = data.likes_count;
+                } else {
+                    showToast(data.message || 'Error liking journal', 'error');
                 }
             } catch (error) {
                 console.error('Error liking journal:', error);
+                showToast('Error liking journal', 'error');
             }
         }
 
@@ -1642,7 +1886,10 @@
         async function addComment(journalId) {
             const input = document.getElementById(`comment-input-${journalId}`);
             const comment = input.value.trim();
-            if (!comment) return;
+            if (!comment) {
+                showToast('Please enter a comment', 'error');
+                return;
+            }
 
             try {
                 const response = await fetch(`/user/journal/${journalId}/comment`, {
@@ -1660,317 +1907,104 @@
                     const newComment = document.createElement('div');
                     newComment.className = 'comment-item';
                     newComment.innerHTML = `
-                        <span class="comment-author">${data.comment.user_name}</span>
+                        <span class="comment-author">${data.comment.user_name || 'User'}</span>
                         <span class="comment-text">${data.comment.comment}</span>
-                        <span class="comment-time">${data.comment.created_at}</span>
+                        <span class="comment-time">${data.comment.created_at || 'Just now'}</span>
                     `;
                     commentsList.appendChild(newComment);
                     input.value = '';
+                    
+                    // Update comment count
+                    const commentBtn = document.querySelector(`[data-journal-id="${journalId}"] .action-button:nth-child(2) span`);
+                    if (commentBtn) {
+                        commentBtn.textContent = parseInt(commentBtn.textContent || 0) + 1;
+                    }
+                } else if (data.error === 'toxic_content') {
+                    showToast(data.message || 'Your comment contains inappropriate content.', 'error');
+                } else {
+                    showToast(data.message || 'Error adding comment', 'error');
                 }
             } catch (error) {
                 console.error('Error adding comment:', error);
-                showNotification('Error adding comment', 'error');
+                showToast('Error adding comment', 'error');
             }
         }
-
-        // Load public journals on page load - called immediately
-        document.addEventListener('DOMContentLoaded', function() {
-            loadPublicJournals();
-
-            // Fallback: If still loading after 5 seconds, force refresh
-            setTimeout(() => {
-                const container = document.getElementById('publicJournalsContainer');
-                if (container && container.innerHTML.includes('Loading public journals')) {
-                    loadPublicJournals(true);
-                }
-            }, 5000);
-        });
         
         // Function to refresh public journals (can be called after toggling)
         function refreshPublicJournals() {
             loadPublicJournals(true); // Force refresh with cache busting
         }
 
-    </script>
-    
-    <!-- Confirm Modal -->
-    <div id="confirmModal" class="confirm-modal" style="display: none;">
-        <div class="confirm-modal-overlay"></div>
-        <div class="confirm-modal-content">
-            <div class="confirm-modal-header">
-                <i class="fas fa-exclamation-circle confirm-modal-icon"></i>
-                <h3 id="confirmModalTitle">Confirm Action</h3>
-            </div>
-            <div class="confirm-modal-body">
-                <p id="confirmModalMessage">Are you sure you want to proceed?</p>
-            </div>
-            <div class="confirm-modal-footer">
-                <button type="button" class="confirm-modal-btn confirm-modal-btn-cancel" onclick="closeConfirmModal()">Cancel</button>
-                <button type="button" class="confirm-modal-btn confirm-modal-btn-confirm" id="confirmModalBtn">Confirm</button>
-            </div>
-        </div>
-    </div>
-
-    <style>
-        .confirm-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .confirm-modal-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
-            z-index: 1;
-        }
-        
-        .confirm-modal-content {
-            position: relative;
-            background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
-            border-radius: 12px;
-            width: 90%;
-            max-width: 450px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            animation: modalSlideIn 0.3s ease-out;
-            z-index: 2;
-            pointer-events: auto;
-        }
-        
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-        
-        .confirm-modal-header {
-            padding: 25px 25px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .confirm-modal-icon {
-            font-size: 28px;
-            color: #f39c12;
-        }
-        
-        .confirm-modal-header h3 {
-            margin: 0;
-            font-size: 20px;
-            color: #e6f0f7;
-            font-weight: 600;
-        }
-        
-        .confirm-modal-body {
-            padding: 25px;
-        }
-        
-        .confirm-modal-body p {
-            margin: 0;
-            font-size: 15px;
-            color: #b8d0e0;
-            line-height: 1.6;
-        }
-        
-        .confirm-modal-footer {
-            padding: 20px 25px 25px;
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-        
-        .confirm-modal-btn {
-            padding: 12px 24px;
-            border-radius: 8px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-        }
-        
-        .confirm-modal-btn-cancel {
-            background: rgba(255, 255, 255, 0.1);
-            color: #e6f0f7;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .confirm-modal-btn-cancel:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-1px);
-        }
-        
-        .confirm-modal-btn-confirm {
-            background: linear-gradient(90deg, #4a90e2, #6bb3ff);
-            color: white;
-            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
-        }
-        
-        .confirm-modal-btn-confirm:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.6);
-        }
-        
-        .confirm-modal-btn-confirm.danger {
-            background: linear-gradient(90deg, #e74c3c, #c0392b);
-            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
-        }
-        
-        .confirm-modal-btn-confirm.danger:hover {
-            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
-        }
-    </style>
-    
-    <script>
-        let confirmModalCallback = null;
-        
-        function showConfirmModal(title, message, confirmText = 'Confirm', isDanger = false) {
-            return new Promise((resolve) => {
-                console.log('showConfirmModal called with:', { title, message, confirmText, isDanger });
-                const modal = document.getElementById('confirmModal');
-                const titleEl = document.getElementById('confirmModalTitle');
-                const messageEl = document.getElementById('confirmModalMessage');
-                const confirmBtn = document.getElementById('confirmModalBtn');
+        // Load My Journals dynamically
+        async function loadMyJournals() {
+            const myJournalsSection = document.getElementById('myJournalsSection');
+            if (!myJournalsSection) return;
+            
+            try {
+                const response = await fetch('/user/journal-list', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
                 
-                if (!modal || !titleEl || !messageEl || !confirmBtn) {
-                    console.error('Confirm modal elements not found');
-                    resolve(false);
+                if (!response.ok) throw new Error('Failed to load journals');
+                
+                const journals = await response.json();
+                
+                if (!Array.isArray(journals) || journals.length === 0) {
+                    myJournalsSection.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-book"></i>
+                            <h3>No Journals Yet</h3>
+                            <p>Start writing your first journal entry!</p>
+                        </div>
+                    `;
                     return;
                 }
                 
-                titleEl.textContent = title;
-                messageEl.textContent = message;
-                confirmBtn.textContent = confirmText;
-                
-                if (isDanger) {
-                    confirmBtn.classList.add('danger');
-                } else {
-                    confirmBtn.classList.remove('danger');
-                }
-                
-                modal.style.display = 'flex';
-                modal.classList.add('show');
-                console.log('Modal displayed');
-                
-                // Reset any previous event handlers
-                confirmBtn.onclick = null;
-                
-                confirmModalCallback = (confirmed) => {
-                    console.log('Confirm modal callback called with:', confirmed);
-                    closeConfirmModal(false); // Don't call callback again
-                    resolve(confirmed);
-                };
-                
-                // Set up confirm button
-                confirmBtn.onclick = () => {
-                    console.log('Confirm button clicked');
-                    confirmModalCallback(true);
-                };
-            });
+                myJournalsSection.innerHTML = journals.map(journal => `
+                    <div class="journal-card" data-journal-id="${journal.id}">
+                        <div class="journal-header">
+                            <div>
+                                <div class="journal-title">
+                                    ${journal.title}
+                                    ${journal.is_posted ? '<span class="posted-badge"><i class="fas fa-check-circle"></i> Posted</span>' : ''}
+                                    ${journal.is_public ? '<span class="posted-badge" style="background: #27ae60; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; text-align: center; min-width: 80px; border: 1px solid #27ae60;"><i class="fas fa-globe" style="color: #fff; margin-right: 6px;"></i><span style="width:100%;text-align:center; color: #fff;">Public</span></span>' : ''}
+                                </div>
+                                <div class="journal-date">${journal.formatted_date || ''}</div>
+                            </div>
+                            <div class="journal-actions">
+                                <button class="action-btn" onclick="toggleJournalPublic(${journal.id}, event)" title="${journal.is_public ? 'Make Private' : 'Make Public'}">
+                                    <i class="fas fa-${journal.is_public ? 'globe' : 'lock'}"></i>
+                                </button>
+                                <button class="action-btn archive-btn" onclick="archiveJournal(${journal.id})" title="Archive">
+                                    <i class="fas fa-archive"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="journal-content-preview" id="preview-${journal.id}">
+                            ${journal.content && journal.content.length > 300 ? journal.content.substring(0, 300) + '...' : journal.content || ''}
+                        </div>
+                        ${journal.content && journal.content.length > 300 ? `<button class="see-more-btn" onclick="toggleContent(${journal.id})">See more</button>` : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading journals:', error);
+                myJournalsSection.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle" style="color: #e74c3c;"></i>
+                        <h3>Error Loading Journals</h3>
+                        <p>Please try again later.</p>
+                    </div>
+                `;
+            }
         }
-        
-        function closeConfirmModal(shouldCallCallback = true) {
-            console.log('closeConfirmModal called, shouldCallCallback:', shouldCallCallback);
-            const modal = document.getElementById('confirmModal');
-            const confirmBtn = document.getElementById('confirmModalBtn');
-            if (modal) {
-                modal.style.display = 'none';
-                modal.classList.remove('show');
-                console.log('Modal hidden');
-            }
-            // Reset button event handler
-            if (confirmBtn) {
-                confirmBtn.onclick = null;
-            }
-            if (confirmModalCallback && shouldCallCallback) {
-                console.log('Calling callback with false');
-                confirmModalCallback(false);
-            }
-            confirmModalCallback = null; // Always clean up
-        }
-        
-        // Close on overlay click
-        document.addEventListener('DOMContentLoaded', function() {
-            const modal = document.getElementById('confirmModal');
-            if (modal) {
-                modal.querySelector('.confirm-modal-overlay').addEventListener('click', closeConfirmModal);
-            }
-        });
-        
-        // Close on Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                const modal = document.getElementById('confirmModal');
-                if (modal && modal.style.display === 'flex') {
-                    closeConfirmModal();
-                }
-            }
-        });
-        
-        // Simple notification function
-        function showNotification(message, type = 'info') {
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#3498db'};
-                color: white;
-                padding: 12px 20px;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                z-index: 10000;
-                font-weight: 500;
-                max-width: 300px;
-                animation: slideInRight 0.3s ease;
-            `;
-            notification.textContent = message;
-            
-            document.body.appendChild(notification);
-            
-            // Remove after 3 seconds
-            setTimeout(() => {
-                notification.style.animation = 'slideOutRight 0.3s ease';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }, 3000);
-        }
-        
-        // Add animation styles
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideInRight {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-            @keyframes slideOutRight {
-                from { transform: translateX(0); opacity: 1; }
-                to { transform: translateX(100%); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
+
     </script>
+    
+    @include('components.confirm-modal')
+    @include('components.toast-notification')
 </body>
 </html>

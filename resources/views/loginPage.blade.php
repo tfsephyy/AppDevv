@@ -13,8 +13,8 @@
             --accent: #4a90e2;
             --accent-light: #6bb3ff;
             --accent-dark: #1e5f99;
-            --text: #e6f0f7;
-            --text-muted: #b8d0e0;
+            --text: #ffffff;
+            --text-muted: #cce4f7;
             --card-bg: rgba(255, 255, 255, 0.1);
             --glass: rgba(255, 255, 255, 0.15);
             --radius: 12px;
@@ -22,7 +22,7 @@
         }
         /* --- Rest of your original CSS --- */
         * { box-sizing: border-box; margin:0; padding:0;}
-        body { font-family:'Inter', system-ui, sans-serif; background: linear-gradient(135deg, #1a3c5e 0%, #2a5c8a 50%, #1a3c5e 100%); color:var(--text); line-height:1.5; height:100vh; overflow:hidden; display:flex; align-items:center; justify-content:center;}
+        body { font-family:'Inter', system-ui, sans-serif; background: linear-gradient(135deg, #020c1b 0%, #0d3b8e 25%, #1565c0 55%, #00838f 82%, #004d61 100%); color:var(--text); text-shadow: 0 1px 3px rgba(0,0,0,0.4); line-height:1.5; height:100vh; overflow:hidden; display:flex; align-items:center; justify-content:center;}
         .container {width:100%; height:100%; display:flex; align-items:center; justify-content:center; padding:20px;}
         .login-container {display:grid; grid-template-columns:1fr 1fr; width:100%; max-width:1200px; height:90vh; max-height:800px; background:var(--card-bg); border-radius:var(--radius); overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); backdrop-filter:blur(10px);}
         .login-image {height:100%; overflow:hidden; position:relative;}
@@ -73,7 +73,14 @@
         .login-form::-webkit-scrollbar-thumb {background:var(--accent); border-radius:3px;}
         .login-form::-webkit-scrollbar-thumb:hover {background:var(--accent-light);}
         @media (max-width:992px){.login-container{height:95vh; max-height:750px;}.login-form{padding:35px;}}
-        @media (max-width:768px){.login-container{grid-template-columns:1fr; height:100vh; max-height:none; border-radius:0;}.login-image{display:none;}.login-form{padding:40px 30px;}.back-home{top:20px; right:20px;}}
+        @media (max-width:768px){
+            body{overflow-y:auto; height:auto; min-height:100vh; align-items:flex-start;}
+            .container{height:auto; min-height:100vh; padding:32px 16px;}
+            .login-container{grid-template-columns:1fr; height:auto; max-height:none; border-radius:16px; border-top:3px solid rgba(255,255,255,0.3); border-bottom:3px solid rgba(255,255,255,0.3); border-left:1px solid rgba(255,255,255,0.15); border-right:1px solid rgba(255,255,255,0.15);}
+            .login-image{display:none;}
+            .login-form{padding:40px 30px; overflow-y:visible;}
+            .back-home{top:20px; right:20px;}
+        }
         @media (max-width:576px){.login-form{padding:30px 20px;}.brand{margin-bottom:30px;}.login-header{margin-bottom:30px;}.login-options{flex-direction:column; gap:12px; align-items:flex-start;}.back-home{top:15px; right:15px; width:40px; height:40px;}}
     </style>
 </head>

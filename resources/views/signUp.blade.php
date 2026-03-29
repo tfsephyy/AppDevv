@@ -13,8 +13,8 @@
             --accent: #4a90e2;
             --accent-light: #6bb3ff;
             --accent-dark: #1e5f99;
-            --text: #e6f0f7;
-            --text-muted: #b8d0e0;
+            --text: #ffffff;
+            --text-muted: #cce4f7;
             --card-bg: rgba(255, 255, 255, 0.1);
             --glass: rgba(255, 255, 255, 0.15);
             --radius: 12px;
@@ -25,13 +25,14 @@
 
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(135deg, #1a3c5e 0%, #2a5c8a 50%, #1a3c5e 100%);
+            background: linear-gradient(135deg, #020c1b 0%, #0d3b8e 25%, #1565c0 55%, #00838f 82%, #004d61 100%);
             color: var(--text);
             height: 100vh;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
         }
 
         .container {
@@ -156,6 +157,19 @@
 
         #program_other_container {
             display: none;
+        }
+
+        @media (max-width: 768px) {
+            body { overflow-y: auto; height: auto; min-height: 100vh; align-items: flex-start; }
+            .container { height: auto; min-height: 100vh; padding: 32px 16px; }
+            .signup-container { grid-template-columns: 1fr; height: auto; max-height: none; border-radius: 16px; border-top: 3px solid rgba(255,255,255,0.3); border-bottom: 3px solid rgba(255,255,255,0.3); border-left: 1px solid rgba(255,255,255,0.15); border-right: 1px solid rgba(255,255,255,0.15); }
+            .signup-container > div:last-child { display: none; }
+            .signup-form { padding: 40px 30px; overflow-y: visible; }
+        }
+
+        @media (max-width: 576px) {
+            .signup-form { padding: 30px 20px; }
+            .form-row { grid-template-columns: 1fr; gap: 0; }
         }
     </style>
 </head>

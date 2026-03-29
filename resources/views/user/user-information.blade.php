@@ -26,7 +26,7 @@
 
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
+            background: linear-gradient(135deg, rgba(26, 60, 94, 0.95), rgba(42, 92, 138, 0.95));
             color: var(--text);
             line-height: 1.5;
             height: 100vh;
@@ -250,6 +250,7 @@
         .info-section li {
             margin-bottom: 8px;
             line-height: 1.5;
+            color: var(--text);
         }
 
         .condition-card {
@@ -266,9 +267,16 @@
             color: var(--accent-light);
         }
 
+        .condition-card h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+            color: white;
+        }
+
         .condition-card p {
             margin-bottom: 10px;
             line-height: 1.6;
+            color: var(--text);
         }
 
         .examples {
@@ -333,6 +341,79 @@
         .information-content::-webkit-scrollbar-thumb:hover {
             background: var(--accent-light);
         }
+
+        /* =====================================================
+           MOBILE STYLES — information page only (≤ 768px)
+           ===================================================== */
+        @media (max-width: 768px) {
+
+            body { overflow-x: hidden !important; }
+
+            .main-content {
+                overflow: visible !important;
+                height: auto !important;
+                flex: 1 0 auto !important;
+                min-height: calc(100vh - 60px);
+            }
+
+            .information-content {
+                overflow-y: visible !important;
+                padding: 14px !important;
+                flex: none !important;
+            }
+
+            .top-bar {
+                padding: 12px 16px !important;
+            }
+
+            .page-title h1 { font-size: 20px !important; }
+            .page-title p  { font-size: 13px !important; }
+
+            .info-section {
+                padding: 16px !important;
+                margin-bottom: 16px !important;
+            }
+
+            .info-section h2 { font-size: 20px !important; }
+            .info-section h3 { font-size: 17px !important; }
+
+            .condition-card {
+                padding: 14px !important;
+            }
+
+            .condition-card h3 { font-size: 16px !important; }
+
+            /* Pagination: hide all numbered buttons by default on mobile */
+            .pagination {
+                gap: 6px !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+            }
+
+            .page-btn[data-page] {
+                display: none;
+            }
+
+            /* JS adds .mobile-show to up to 5 buttons at a time */
+            .page-btn[data-page].mobile-show {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 10px 12px !important;
+                min-width: 40px !important;
+            }
+
+            /* Keep prev/next arrows always visible, icon-only */
+            #prevBtn, #nextBtn {
+                padding: 10px 12px !important;
+                flex-shrink: 0;
+            }
+
+            #prevBtn .btn-label,
+            #nextBtn .btn-label {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -368,7 +449,7 @@
                 <!-- Pagination Controls -->
                 <div class="pagination" id="paginationControls">
                     <button class="page-btn" id="prevBtn" disabled>
-                        <i class="fas fa-chevron-left"></i> Previous
+                        <i class="fas fa-chevron-left"></i> <span class="btn-label">Previous</span>
                     </button>
                     <button class="page-btn active" data-page="1">1</button>
                     <button class="page-btn" data-page="2">2</button>
@@ -379,7 +460,7 @@
                     <button class="page-btn" data-page="7">7</button>
                     <button class="page-btn" data-page="8">8</button>
                     <button class="page-btn" id="nextBtn">
-                        Next <i class="fas fa-chevron-right"></i>
+                        <span class="btn-label">Next</span> <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
 
@@ -498,6 +579,24 @@
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
 
+        // Update which 5 page buttons are visible on mobile
+        function updateMobilePagination(page) {
+            // Centre a window of 5 around the current page
+            let start = Math.max(1, page - 2);
+            let end   = Math.min(totalPages, start + 4);
+            // Shift start left if we're near the end
+            start = Math.max(1, end - 4);
+
+            pageButtons.forEach(btn => {
+                const p = parseInt(btn.dataset.page);
+                if (p >= start && p <= end) {
+                    btn.classList.add('mobile-show');
+                } else {
+                    btn.classList.remove('mobile-show');
+                }
+            });
+        }
+
         function showPage(page) {
             // Hide all conditions
             conditions.forEach(condition => {
@@ -510,7 +609,7 @@
                 currentCondition.style.display = 'block';
             }
 
-            // Update button states
+            // Update button active states
             pageButtons.forEach(btn => {
                 btn.classList.remove('active');
                 if (parseInt(btn.dataset.page) === page) {
@@ -518,11 +617,14 @@
                 }
             });
 
-            // Update prev/next buttons
+            // Update prev/next disabled states
             prevBtn.disabled = page === 1;
             nextBtn.disabled = page === totalPages;
 
             currentPage = page;
+
+            // Update mobile sliding window
+            updateMobilePagination(page);
         }
 
         // Event listeners for page buttons
@@ -548,5 +650,8 @@
         // Initialize first page
         showPage(1);
     </script>
+
+    @include('components.confirm-modal')
+    @include('components.toast-notification')
 </body>
 </html>

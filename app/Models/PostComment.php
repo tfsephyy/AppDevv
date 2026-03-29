@@ -30,4 +30,9 @@ class PostComment extends Model
     {
         return $this->hasMany(PostComment::class, 'parent_id');
     }
+
+    public function userAccount()
+    {
+        return $this->belongsTo(UserAccount::class, 'user_id', 'id');
+    }
 }

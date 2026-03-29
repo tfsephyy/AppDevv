@@ -1,5 +1,37 @@
+<!-- ===== MOBILE TOP BAR ===== -->
+<div class="mobile-topbar" id="mobileTopbar">
+    <div class="mobile-topbar-brand">
+        <div class="mobile-topbar-logo">ME</div>
+        <div class="mobile-topbar-text">
+            <h1>MindEase</h1>
+            <p>Student Portal</p>
+        </div>
+    </div>
+    <div class="mobile-topbar-actions">
+        <button class="mobile-icon-btn" id="mobileNotifBtn" aria-label="Notifications">
+            <i class="fas fa-bell"></i>
+            <span class="mobile-notif-badge" id="mobileNotifBadge" style="display:none;">0</span>
+        </button>
+        <button class="mobile-icon-btn" id="mobileMenuBtn" aria-label="Open menu">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+    </div>
+</div>
+
+<!-- Mobile Notification Dropdown -->
+<div class="mobile-notif-dropdown" id="mobileNotifDropdown" style="display:none;">
+    <div class="notification-header">
+        <h4>Notifications</h4>
+        <button onclick="markAllAsRead()" style="background:none;border:none;color:#4a90e2;cursor:pointer;font-size:12px;">Mark all as read</button>
+    </div>
+    <div class="notification-list" id="mobileNotificationList">
+        <div style="text-align:center;padding:20px;color:#b8d0e0;">Loading notifications...</div>
+    </div>
+</div>
+
 <div class="sidebar">
-    @include('components.confirm-modal')
     <div class="brand">
         <div class="logo">
             ME
@@ -11,14 +43,14 @@
     </div>
 
     <div class="nav-links">
-        <a href="{{ route('user.journal') }}" class="nav-item {{ request()->routeIs('user.journal') ? 'active' : '' }}">
-            <i class="fas fa-book"></i>
-            <span>Journal</span>
-        </a>
-
         <a href="{{ route('user.schedules') }}" class="nav-item {{ request()->routeIs('user.schedules') ? 'active' : '' }}">
             <i class="fas fa-calendar-alt"></i>
             <span>Schedules</span>
+        </a>
+
+        <a href="{{ route('user.journal') }}" class="nav-item {{ request()->routeIs('user.journal') ? 'active' : '' }}">
+            <i class="fas fa-book"></i>
+            <span>Journal</span>
         </a>
 
         <a href="{{ route('user.sessions') }}" class="nav-item {{ request()->routeIs('user.sessions') ? 'active' : '' }}">
@@ -93,6 +125,77 @@
         </form>
     </div>
 </div>
+
+<!-- ===== MOBILE MENU OVERLAY ===== -->
+<div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
+<!-- ===== MOBILE SLIDE-IN MENU ===== -->
+<div class="mobile-menu-panel" id="mobileMenuPanel">
+
+    <!-- Panel Header -->
+    <div class="mobile-menu-header">
+        <div class="mobile-topbar-brand">
+            <div class="mobile-topbar-logo">ME</div>
+            <div class="mobile-topbar-text">
+                <h1>MindEase</h1>
+                <p>Student Portal</p>
+            </div>
+        </div>
+        <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Close menu">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Navigation Links -->
+    <div class="mobile-menu-nav">
+        <a href="{{ route('user.schedules') }}" class="{{ request()->routeIs('user.schedules') ? 'active' : '' }}">
+            <i class="fas fa-calendar-alt"></i><span>Schedules</span>
+        </a>
+        <a href="{{ route('user.journal') }}" class="{{ request()->routeIs('user.journal') ? 'active' : '' }}">
+            <i class="fas fa-book"></i><span>Journal</span>
+        </a>
+        <a href="{{ route('user.sessions') }}" class="{{ request()->routeIs('user.sessions') ? 'active' : '' }}">
+            <i class="fas fa-comments"></i><span>Sessions</span>
+        </a>
+        <a href="{{ route('user.public.chat') }}" class="{{ request()->routeIs('user.public.chat') ? 'active' : '' }}">
+            <i class="fas fa-users"></i><span>Public Chat</span>
+        </a>
+        <a href="{{ route('user.feed') }}" class="{{ request()->routeIs('user.feed') ? 'active' : '' }}">
+            <i class="fas fa-newspaper"></i><span>Feed</span>
+        </a>
+        <a href="{{ route('user.information') }}" class="{{ request()->routeIs('user.information') ? 'active' : '' }}">
+            <i class="fas fa-info-circle"></i><span>Information</span>
+        </a>
+    </div>
+
+    <!-- Profile Section -->
+    <div class="mobile-menu-profile">
+        <div class="mobile-menu-avatar">
+            @if(session('user_picture'))
+                <img src="{{ asset('storage/' . session('user_picture')) }}" alt="Profile">
+            @else
+                {{ strtoupper(substr(session('user_name', 'Student'), 0, 2)) }}
+            @endif
+        </div>
+        <div class="mobile-menu-profile-info">
+            <div class="mobile-menu-profile-name">{{ session('user_name', 'Student') }}</div>
+            <div class="mobile-menu-profile-role">Student</div>
+        </div>
+    </div>
+
+    <!-- Profile Actions -->
+    <div class="mobile-menu-profile-actions">
+        <button class="mobile-menu-action-btn" onclick="openProfileModal(); closeMobileMenu();">
+            <i class="fas fa-user"></i> Profile
+        </button>
+        <button class="mobile-menu-action-btn mobile-menu-logout-btn" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+    </div>
+</div>
+
+<!-- Confirm Modal (outside sidebar so it stays visible on mobile) -->
+@include('components.confirm-modal')
 
 <!-- Profile Modal -->
 <div id="profileModal" class="profile-modal" style="display: none;">
@@ -415,9 +518,10 @@
     left: 0;
     right: 0;
     margin-bottom: 10px;
-    background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
+    background: linear-gradient(135deg, rgba(26, 60, 94, 0.98) 0%, rgba(42, 92, 138, 0.98) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
     max-height: 400px;
     overflow: hidden;
     z-index: 1000;
@@ -486,6 +590,356 @@
 .notification-list::-webkit-scrollbar-thumb {
     background: #4a90e2;
     border-radius: 3px;
+}
+
+/* ============================================================
+   MOBILE STYLES — Only applied on screens ≤ 768px
+   ============================================================ */
+
+/* Hide the desktop sidebar on mobile */
+@media (max-width: 768px) {
+    .sidebar { display: none !important; }
+
+    /* Push main content below the fixed topbar */
+    .sidebar ~ * {
+        padding-top: 60px !important;
+        width: 100% !important;
+    }
+
+    /* Fix body for mobile scrolling */
+    body {
+        flex-direction: column !important;
+        overflow-y: auto !important;
+        height: auto !important;
+        min-height: 100vh !important;
+    }
+}
+
+/* === Mobile Top Bar === */
+.mobile-topbar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(135deg, #1a3c5e 0%, #2a5c8a 100%);
+    z-index: 900;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 768px) {
+    .mobile-topbar { display: flex; }
+}
+
+.mobile-topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.mobile-topbar-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #4a90e2, #6bb3ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(74, 144, 226, 0.4);
+}
+
+.mobile-topbar-text {
+    min-width: 0;
+}
+
+.mobile-topbar-text h1 {
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mobile-topbar-text p {
+    font-size: 11px;
+    color: #b8d0e0;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.mobile-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* Icon buttons (bell + hamburger) */
+.mobile-icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #e6f0f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mobile-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Hamburger lines */
+.hamburger-line {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: #e6f0f7;
+    border-radius: 2px;
+    transition: all 0.25s ease;
+}
+
+/* Notification badge on mobile bell */
+.mobile-notif-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+/* === Mobile Notification Dropdown === */
+.mobile-notif-dropdown {
+    position: fixed;
+    top: 60px;
+    right: 14px;
+    left: 14px;
+    background: linear-gradient(135deg, #1e4d7b 0%, #2a5c8a 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    z-index: 1050;
+    max-height: 360px;
+    overflow: hidden;
+}
+
+/* === Mobile Menu Overlay === */
+.mobile-menu-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1100;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.mobile-menu-overlay.open {
+    display: block;
+}
+
+/* === Mobile Slide-In Panel === */
+.mobile-menu-panel {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: min(300px, 85vw);
+    height: 100%;
+    background: linear-gradient(160deg, #1a3c5e 0%, #2a5c8a 60%, #1a3c5e 100%);
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -6px 0 30px rgba(0, 0, 0, 0.4);
+}
+
+.mobile-menu-panel.open {
+    right: 0;
+}
+
+/* Panel header (logo + close btn) */
+.mobile-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.mobile-menu-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #e6f0f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.mobile-menu-close:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* Nav links inside panel */
+.mobile-menu-nav {
+    flex: 1;
+    padding: 8px 0;
+    overflow-y: auto;
+}
+
+.mobile-menu-nav a {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 20px;
+    color: #b8d0e0;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.mobile-menu-nav a:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: white;
+    border-left-color: rgba(255, 255, 255, 0.3);
+}
+
+.mobile-menu-nav a.active {
+    background: rgba(74, 144, 226, 0.2);
+    color: white;
+    border-left-color: #4a90e2;
+}
+
+.mobile-menu-nav a i {
+    width: 20px;
+    text-align: center;
+    font-size: 16px;
+}
+
+/* Profile row in panel */
+.mobile-menu-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.mobile-menu-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4a90e2, #6bb3ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.mobile-menu-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mobile-menu-profile-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.mobile-menu-profile-name {
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mobile-menu-profile-role {
+    color: #b8d0e0;
+    font-size: 12px;
+}
+
+/* Profile / Logout buttons in panel */
+.mobile-menu-profile-actions {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 20px;
+    flex-shrink: 0;
+}
+
+.mobile-menu-action-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    color: #e6f0f7;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: background 0.2s;
+}
+
+.mobile-menu-action-btn:hover { background: rgba(255, 255, 255, 0.15); }
+
+.mobile-menu-logout-btn {
+    border-color: rgba(231, 76, 60, 0.4);
+    color: #ff8a80;
+}
+
+.mobile-menu-logout-btn:hover { background: rgba(231, 76, 60, 0.15); }
+
+/* Prevent body scroll when mobile menu is open */
+body.mobile-menu-open {
+    overflow: hidden !important;
 }
 </style>
 
@@ -762,13 +1216,18 @@ async function updateNotificationBadge() {
     try {
         const response = await fetch('/user/notifications/unread-count');
         const data = await response.json();
+
+        // Desktop sidebar badge
         const badge = document.getElementById('notificationBadge');
-        
+        // Mobile topbar badge
+        const mobileBadge = document.getElementById('mobileNotifBadge');
+
         if (data.count > 0) {
-            badge.textContent = data.count;
-            badge.style.display = 'flex';
+            if (badge) { badge.textContent = data.count; badge.style.display = 'flex'; }
+            if (mobileBadge) { mobileBadge.textContent = data.count; mobileBadge.style.display = 'flex'; }
         } else {
-            badge.style.display = 'none';
+            if (badge) { badge.style.display = 'none'; }
+            if (mobileBadge) { mobileBadge.style.display = 'none'; }
         }
     } catch (error) {
         console.error('Error updating badge:', error);
@@ -809,8 +1268,110 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load initial notification count
     updateNotificationBadge();
-    
+
     // Refresh badge every 30 seconds
     setInterval(updateNotificationBadge, 30000);
+
+    // ── Mobile top bar buttons ──────────────────────────────
+    const mobileMenuBtn  = document.getElementById('mobileMenuBtn');
+    const mobileMenuClose = document.getElementById('mobileMenuClose');
+    const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+    const mobileNotifBtn = document.getElementById('mobileNotifBtn');
+
+    if (mobileMenuBtn)    mobileMenuBtn.addEventListener('click', openMobileMenu);
+    if (mobileMenuClose)  mobileMenuClose.addEventListener('click', closeMobileMenu);
+    if (mobileMenuOverlay) mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+    if (mobileNotifBtn)   mobileNotifBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleMobileNotifications();
+    });
+
+    // Close mobile notification dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const mnd = document.getElementById('mobileNotifDropdown');
+        const mnb = document.getElementById('mobileNotifBtn');
+        if (mnd && mnb && !mnb.contains(e.target) && !mnd.contains(e.target)) {
+            mnd.style.display = 'none';
+        }
+    });
 });
+
+// ── Mobile menu open / close ────────────────────────────────
+function openMobileMenu() {
+    document.getElementById('mobileMenuPanel').classList.add('open');
+    document.getElementById('mobileMenuOverlay').classList.add('open');
+    document.body.classList.add('mobile-menu-open');
+}
+
+function closeMobileMenu() {
+    document.getElementById('mobileMenuPanel').classList.remove('open');
+    document.getElementById('mobileMenuOverlay').classList.remove('open');
+    document.body.classList.remove('mobile-menu-open');
+}
+
+// ── Mobile notification dropdown ────────────────────────────
+async function toggleMobileNotifications() {
+    const dropdown = document.getElementById('mobileNotifDropdown');
+    if (!dropdown) return;
+
+    if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+        dropdown.style.display = 'block';
+        await loadMobileNotifications();
+    } else {
+        dropdown.style.display = 'none';
+    }
+}
+
+async function loadMobileNotifications() {
+    try {
+        const response = await fetch('/user/notifications');
+        const notifications = await response.json();
+        const list = document.getElementById('mobileNotificationList');
+        if (!list) return;
+
+        if (notifications.length === 0) {
+            list.innerHTML = '<div style="text-align:center;padding:30px;color:#b8d0e0;"><i class="fas fa-bell-slash" style="font-size:28px;margin-bottom:8px;opacity:0.5;"></i><p>No notifications yet</p></div>';
+        } else {
+            list.innerHTML = notifications.map(n => `
+                <div class="notification-item ${!n.read ? 'unread' : ''}" onclick="markNotificationAsRead(${n.id}); loadMobileNotifications();">
+                    <div class="notification-title">${n.title}</div>
+                    <div class="notification-message">${n.message}</div>
+                    <div class="notification-time">${timeAgo(n.created_at)}</div>
+                </div>
+            `).join('');
+        }
+    } catch (err) {
+        console.error('Error loading mobile notifications:', err);
+    }
+}
+
+// Welcome Motivational Modal
+@if(session('show_welcome_motivational') && session('welcome_motivational_message'))
+    @php
+        $welcomeMsg = session('welcome_motivational_message');
+        session()->forget('show_welcome_motivational');
+        session()->forget('welcome_motivational_message');
+    @endphp
+    (function() {
+        const msg = @json($welcomeMsg);
+        const overlay = document.createElement('div');
+        overlay.id = 'welcomeMotivationalModal';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        overlay.innerHTML = `
+            <div style="background:linear-gradient(135deg,#1a3c5e,#2a5c8a);border-radius:16px;padding:40px;max-width:500px;width:90%;text-align:center;border:1px solid rgba(255,255,255,0.15);box-shadow:0 20px 60px rgba(0,0,0,0.5);backdrop-filter:blur(10px);">
+                <div style="font-size:48px;margin-bottom:15px;">✨</div>
+                <h2 style="color:#e6f0f7;font-size:22px;margin-bottom:8px;">Welcome Back!</h2>
+                <p style="color:#b8d0e0;font-size:13px;margin-bottom:20px;">Here's a motivational message for you today</p>
+                <div style="background:rgba(255,255,255,0.08);border-radius:12px;padding:25px;margin-bottom:25px;border-left:4px solid #4a90e2;">
+                    <p style="color:#e6f0f7;font-size:16px;line-height:1.7;font-style:italic;">"${msg}"</p>
+                </div>
+                <button onclick="document.getElementById('welcomeMotivationalModal').remove()" style="padding:12px 32px;border-radius:8px;border:none;background:linear-gradient(90deg,#4a90e2,#6bb3ff);color:white;font-weight:600;cursor:pointer;font-size:14px;transition:transform 0.2s;">
+                    <i class="fas fa-heart" style="margin-right:8px;"></i>Thank You!
+                </button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+    })();
+@endif
 </script>

@@ -653,7 +653,7 @@
                         <tr>
                             <th>Student</th>
                             <th>Status</th>
-                            <th>Diagnosis</th>
+                            <th>concern</th>
                             <th>Last Session</th>
                             <th>Actions</th>
                         </tr>
@@ -751,7 +751,7 @@
                         <tr>
                             <th>Student</th>
                             <th>Status</th>
-                            <th>Diagnosis</th>
+                            <th>concern</th>
                             <th>Archived Date</th>
                             <th>Actions</th>
                         </tr>
@@ -816,8 +816,8 @@
                         <div class="detail-value" id="viewStatus"><span class="status-badge status-active">Active</span></div>
                     </div>
                     <div class="detail-group">
-                        <div class="detail-label">Diagnosis</div>
-                        <div class="detail-value" id="viewDiagnosis">Anxiety Disorder</div>
+                        <div class="detail-label">concern</div>
+                        <div class="detail-value" id="viewconcern">Anxiety Disorder</div>
                     </div>
                     <div class="detail-group">
                         <div class="detail-label">Last Session</div>
@@ -866,8 +866,8 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="editDiagnosis">Diagnosis</label>
-                    <input type="text" id="editDiagnosis" class="form-control" value="Anxiety Disorder">
+                    <label for="editconcern">concern</label>
+                    <input type="text" id="editconcern" class="form-control" value="Anxiety Disorder">
                 </div>
                 <div class="form-group">
                     <label for="editLastSession">Last Session</label>
@@ -914,8 +914,8 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="addDiagnosis">Diagnosis</label>
-                    <input type="text" id="addDiagnosis" class="form-control" placeholder="Enter diagnosis">
+                    <label for="addconcern">concern</label>
+                    <input type="text" id="addconcern" class="form-control" placeholder="Enter concern">
                 </div>
                 <div class="form-group">
                     <label for="addLastSession">Last Session</label>
@@ -942,7 +942,7 @@
                 studentId: "2023-00125",
                 course: "Computer Science",
                 status: "active",
-                diagnosis: "Anxiety Disorder",
+                concern: "Anxiety Disorder",
                 lastSession: "2023-10-15",
                 notes: "John has been showing improvement in managing his anxiety through the breathing exercises we've practiced. He reports feeling more in control during stressful situations but still struggles with exam-related anxiety. We'll continue working on coping strategies for academic stress.",
                 archived: false
@@ -953,7 +953,7 @@
                 studentId: "2023-00126",
                 course: "Psychology",
                 status: "pending",
-                diagnosis: "Depression",
+                concern: "Depression",
                 lastSession: "2023-10-14",
                 notes: "Maria is making progress but still experiences depressive episodes. We're working on identifying triggers and developing coping mechanisms. She has shown interest in mindfulness practices.",
                 archived: false
@@ -964,7 +964,7 @@
                 studentId: "2023-00127",
                 course: "Engineering",
                 status: "completed",
-                diagnosis: "Stress Management",
+                concern: "Stress Management",
                 lastSession: "2023-10-12",
                 notes: "Robert has successfully completed the stress management program. He has developed effective coping strategies and reports significant improvement in handling academic pressure.",
                 archived: false
@@ -978,7 +978,7 @@
                 studentId: "2023-00129",
                 course: "Information Tech",
                 status: "archived",
-                diagnosis: "Academic Stress",
+                concern: "Academic Stress",
                 lastSession: "2023-10-10",
                 notes: "Thomas completed counseling sessions for academic stress. Case closed as student has graduated.",
                 archived: true
@@ -1108,7 +1108,7 @@
                 const statusElement = document.getElementById('viewStatus');
                 statusElement.innerHTML = `<span class="status-badge status-${student.status}">${student.status.charAt(0).toUpperCase() + student.status.slice(1)}</span>`;
                 
-                document.getElementById('viewDiagnosis').textContent = student.diagnosis;
+                document.getElementById('viewconcern').textContent = student.concern;
                 document.getElementById('viewLastSession').textContent = formatDate(student.lastSession);
                 document.getElementById('viewNotes').textContent = student.notes;
                 
@@ -1124,7 +1124,7 @@
                 document.getElementById('editId').value = student.studentId;
                 document.getElementById('editCourse').value = student.course;
                 document.getElementById('editStatus').value = student.status;
-                document.getElementById('editDiagnosis').value = student.diagnosis;
+                document.getElementById('editconcern').value = student.concern;
                 document.getElementById('editLastSession').value = student.lastSession;
                 document.getElementById('editNotes').value = student.notes;
                 
@@ -1143,7 +1143,7 @@
                 students[studentIndex].name = document.getElementById('editName').value;
                 students[studentIndex].course = document.getElementById('editCourse').value;
                 students[studentIndex].status = document.getElementById('editStatus').value;
-                students[studentIndex].diagnosis = document.getElementById('editDiagnosis').value;
+                students[studentIndex].concern = document.getElementById('editconcern').value;
                 students[studentIndex].lastSession = document.getElementById('editLastSession').value;
                 students[studentIndex].notes = document.getElementById('editNotes').value;
                 
@@ -1158,11 +1158,11 @@
             const studentId = document.getElementById('addId').value;
             const course = document.getElementById('addCourse').value;
             const status = document.getElementById('addStatus').value;
-            const diagnosis = document.getElementById('addDiagnosis').value;
+            const concern = document.getElementById('addconcern').value;
             const lastSession = document.getElementById('addLastSession').value;
             const notes = document.getElementById('addNotes').value;
             
-            if (!name || !studentId || !course || !diagnosis) {
+            if (!name || !studentId || !course || !concern) {
                 alert('Please fill in all required fields');
                 return;
             }
@@ -1173,7 +1173,7 @@
                 studentId: studentId,
                 course: course,
                 status: status,
-                diagnosis: diagnosis,
+                concern: concern,
                 lastSession: lastSession,
                 notes: notes,
                 archived: false
@@ -1190,7 +1190,7 @@
             document.getElementById('addId').value = '';
             document.getElementById('addCourse').value = '';
             document.getElementById('addStatus').value = 'active';
-            document.getElementById('addDiagnosis').value = '';
+            document.getElementById('addconcern').value = '';
             document.getElementById('addLastSession').value = '';
             document.getElementById('addNotes').value = '';
         }

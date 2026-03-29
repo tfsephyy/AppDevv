@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use App\Models\MotivationalMessage;
+use App\Models\Notification;
 
 class LoginController extends Controller
 {
@@ -30,6 +32,7 @@ class LoginController extends Controller
             $request->session()->put('admin_id', $admin->id);
             $request->session()->put('admin_name', $admin->name ?? 'Admin');
             $request->session()->put('admin_picture', $admin->picture);
+            $request->session()->put('show_welcome_motivational', true);
             return redirect()->route('dashboard');
         }
 
@@ -47,6 +50,22 @@ class LoginController extends Controller
             $request->session()->put('user_name', $user->name);
             $request->session()->put('user_email', $user->email);
             $request->session()->put('user_picture', $user->picture);
+            $request->session()->put('show_welcome_motivational', true);
+
+            // Pick a random motivational message, send it to the student's notification bell,
+            // and store it in session so the welcome modal shows the same one
+            $motivational = MotivationalMessage::where('archived', false)->inRandomOrder()->first();
+            if ($motivational) {
+                Notification::create([
+                    'user_id' => $user->id,
+                    'title'   => 'Daily Motivational Message',
+                    'message' => "\u{201C}" . $motivational->message . "\u{201D}",
+                    'type'    => 'motivational',
+                    'read'    => false,
+                ]);
+                $request->session()->put('welcome_motivational_message', $motivational->message);
+            }
+
             return redirect()->route('user.schedules');
         }
 

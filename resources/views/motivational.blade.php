@@ -29,7 +29,7 @@
 
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
+            background: linear-gradient(135deg, rgba(26, 60, 94, 0.95), rgba(42, 92, 138, 0.95));
             color: var(--text);
             line-height: 1.5;
             height: 100vh;
@@ -890,6 +890,7 @@
                     {{ session('success') }}
                 </div>
             @endif
+            <div id="dynamicSuccessBanner" style="display:none; background: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 15px; border-radius: 8px; margin-bottom: 20px; transition: opacity 0.5s ease-out;"></div>
 
             <div class="content-header">
                 <div class="content-tabs">
@@ -1197,6 +1198,27 @@
     <script>
         let currentMessageId = null;
 
+        function showSuccessBanner(msg) {
+            const banner = document.getElementById('dynamicSuccessBanner');
+            banner.textContent = msg;
+            banner.style.display = 'block';
+            banner.style.opacity = '1';
+            setTimeout(() => { banner.style.opacity = '0'; setTimeout(() => { banner.style.display = 'none'; }, 500); }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const msg = sessionStorage.getItem('motivationalSuccess');
+            if (msg) {
+                sessionStorage.removeItem('motivationalSuccess');
+                showSuccessBanner(msg);
+            }
+            // Auto-fade the server-side success alert
+            const serverAlert = document.getElementById('successAlert');
+            if (serverAlert) {
+                setTimeout(() => { serverAlert.style.opacity = '0'; setTimeout(() => serverAlert.remove(), 500); }, 3000);
+            }
+        });
+
         // Open add modal
         function openAddModal() {
             document.getElementById('modalTitle').textContent = 'Add Motivational Message';
@@ -1225,7 +1247,6 @@
                 document.getElementById('viewModal').style.display = 'flex';
             } catch (error) {
                 console.error('Error loading message:', error);
-                alert('Error loading message');
             }
         }
 
@@ -1241,7 +1262,6 @@
                 document.getElementById('messageModal').style.display = 'flex';
             } catch (error) {
                 console.error('Error loading message:', error);
-                alert('Error loading message');
             }
         }
 
@@ -1258,19 +1278,14 @@
                     });
 
                     if (response.ok) {
-                        // Remove the message row from the DOM
                         const messageRow = document.querySelector(`[data-message-id="${id}"]`);
                         if (messageRow) {
                             messageRow.remove();
                         }
-                        // Show success message
-                        alert('Message archived successfully!');
-                    } else {
-                        alert('Error archiving message');
+                        showSuccessBanner('Message archived successfully!');
                     }
                 } catch (error) {
                     console.error('Error archiving message:', error);
-                    alert('Error archiving message');
                 }
             }
         }
@@ -1279,13 +1294,18 @@
         document.getElementById('messageForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
+            if (currentMessageId) {
+                // Editing — show confirmation dialog first
+                const confirmed = await showConfirmModal('Update Message', 'Are you sure you want to update this motivational message?', 'Update');
+                if (!confirmed) return;
+            }
+
             const formData = new FormData();
             formData.append('message', document.getElementById('message').value);
 
             try {
                 let response;
                 if (currentMessageId) {
-                    // Update - use PUT method
                     formData.append('_method', 'PUT');
                     response = await fetch(`/motivational/${currentMessageId}`, {
                         method: 'POST',
@@ -1295,7 +1315,6 @@
                         body: formData
                     });
                 } else {
-                    // Create
                     response = await fetch('/motivational', {
                         method: 'POST',
                         headers: {
@@ -1306,13 +1325,12 @@
                 }
 
                 if (response.ok) {
+                    const msg = currentMessageId ? 'Message updated successfully!' : 'Message added successfully!';
+                    sessionStorage.setItem('motivationalSuccess', msg);
                     location.reload();
-                } else {
-                    alert('Error saving message');
                 }
             } catch (error) {
                 console.error('Error saving message:', error);
-                alert('Error saving message');
             }
         });
     </script>

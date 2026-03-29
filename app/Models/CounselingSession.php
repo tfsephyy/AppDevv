@@ -12,7 +12,7 @@ class CounselingSession extends Model
     protected $fillable = [
         'user_account_id',
         'status',
-        'diagnosis',
+        'concern',
         'last_session',
         'note',
         'archived',

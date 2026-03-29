@@ -29,7 +29,7 @@
 
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
+            background: linear-gradient(135deg, rgba(26, 60, 94, 0.95), rgba(42, 92, 138, 0.95));
             color: var(--text);
             line-height: 1.5;
             height: 100vh;
@@ -1107,6 +1107,26 @@
         <button class="viewer-nav viewer-next" onclick="nextImage()"><i class="fas fa-chevron-right"></i></button>
     </div>
 
+    <!-- Edit Comment Modal -->
+    <div class="modal" id="editCommentModal" style="display:none;">
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h2>Edit Comment</h2>
+                <button class="close-modal" onclick="document.getElementById('editCommentModal').style.display='none'">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px 20px 8px;">
+                <div style="margin-bottom:15px;">
+                    <label style="color:var(--text-muted);font-size:14px;margin-bottom:8px;display:block;">Comment</label>
+                    <textarea id="editCommentText" class="form-control" style="min-height:80px;resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex;flex-direction:row;justify-content:flex-end;gap:12px;padding:16px 24px 20px;">
+                <button class="btn btn-secondary" onclick="document.getElementById('editCommentModal').style.display='none'">Cancel</button>
+                <button class="btn btn-primary" id="confirmEditCommentBtn">Update</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Comment Context Menu -->
     <div class="comment-context-menu" id="commentContextMenu">
         <div class="context-menu-item" onclick="replyToComment()">
@@ -1200,8 +1220,46 @@
 
         function editComment() {
             hideCommentMenu();
-            alert('Edit comment functionality coming soon!');
-            // TODO: Implement edit comment
+            
+            // Get current comment text
+            const commentEl = document.querySelector(`[data-comment-id="${contextMenuCommentId}"] .comment-text`);
+            if (!commentEl) return;
+            const currentText = commentEl.textContent.trim();
+            
+            // Open edit comment modal
+            document.getElementById('editCommentText').value = currentText;
+            document.getElementById('editCommentModal').style.display = 'flex';
+            
+            document.getElementById('confirmEditCommentBtn').onclick = async function() {
+                const newText = document.getElementById('editCommentText').value.trim();
+                if (newText === '' || newText === currentText) {
+                    document.getElementById('editCommentModal').style.display = 'none';
+                    return;
+                }
+                const confirmed = await showConfirmModal('Edit Comment', 'Are you sure you want to edit this comment?', 'Update');
+                if (confirmed) {
+                    document.getElementById('editCommentModal').style.display = 'none';
+                    try {
+                        const response = await fetch(`/feed/comment/${contextMenuCommentId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({ comment: newText })
+                        });
+                        if (response.ok) {
+                            showSuccessBanner('Comment updated successfully!');
+                            await loadComments(contextMenuPostId);
+                        } else {
+                            showSuccessBanner('Failed to update comment.');
+                        }
+                    } catch (error) {
+                        console.error('Error updating comment:', error);
+                        showSuccessBanner('Failed to update comment.');
+                    }
+                }
+            };
         }
 
         async function deleteComment() {
@@ -1221,6 +1279,7 @@
                 if (response.ok) {
                     // Reload comments
                     await loadComments(contextMenuPostId);
+                    showSuccessBanner('Comment deleted successfully!');
                     
                     // Update comment count
                     const postCard = document.querySelector(`[data-post-id="${contextMenuPostId}"]`);
@@ -1232,7 +1291,7 @@
                 }
             } catch (error) {
                 console.error('Error deleting comment:', error);
-                alert('Failed to delete comment');
+                showSuccessBanner('Failed to delete comment');
             }
         }
 
@@ -1276,6 +1335,34 @@
                 previousImage();
             } else if (e.key === 'ArrowRight' && document.getElementById('imageViewerModal').style.display === 'flex') {
                 nextImage();
+            }
+        });
+
+        // Success banner notification (same as other pages)
+        function showSuccessBanner(msg) {
+            let banner = document.getElementById('successAlert');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'successAlert';
+                banner.style.cssText = 'background:rgba(46,204,113,0.2);color:#2ecc71;padding:15px;border-radius:8px;margin-bottom:20px;transition:opacity 0.5s ease-out;';
+                const content = document.querySelector('.feed-content');
+                content.insertBefore(banner, content.firstChild);
+            }
+            banner.style.opacity = '1';
+            banner.style.display = 'block';
+            banner.textContent = msg;
+            setTimeout(() => {
+                banner.style.opacity = '0';
+                setTimeout(() => { banner.style.display = 'none'; }, 500);
+            }, 3000);
+        }
+
+        // Show persisted success banner after page reload
+        document.addEventListener('DOMContentLoaded', function() {
+            const pendingMsg = sessionStorage.getItem('feedSuccess');
+            if (pendingMsg) {
+                sessionStorage.removeItem('feedSuccess');
+                showSuccessBanner(pendingMsg);
             }
         });
 
@@ -1434,10 +1521,15 @@
             const commentDiv = document.createElement('div');
             commentDiv.className = isReply ? 'comment reply' : 'comment';
             commentDiv.setAttribute('data-comment-id', comment.id);
+            if (comment.user_id) commentDiv.setAttribute('data-user-id', comment.user_id);
+
+            const authorName = comment.author_name || 'Unknown User';
+            const initials = comment.author_initials || authorName.split(' ').map(s => s[0] || '').slice(0,2).join('').toUpperCase() || 'US';
+
             commentDiv.innerHTML = `
                 <div class="comment-header">
-                    <div class="comment-avatar">AD</div>
-                    <span class="comment-author">Admin</span>
+                    <div class="comment-avatar">${initials}</div>
+                    <span class="comment-author">${authorName}</span>
                     <span class="comment-time">${timeAgo(comment.created_at)}</span>
                 </div>
                 <div class="comment-text" oncontextmenu="showCommentMenu(event, ${comment.id}, ${postId}); return false;">${comment.comment}</div>
@@ -1519,11 +1611,16 @@
                         commentCountSpan.textContent = currentCount + 1;
                     }
                 } else {
-                    alert('Failed to post comment');
+                    const data = await response.json();
+                    if (data.error === 'toxic_content') {
+                        showSuccessBanner(data.message || 'Your comment contains inappropriate content.');
+                    } else {
+                        showSuccessBanner('Failed to post comment');
+                    }
                 }
             } catch (error) {
                 console.error('Error adding comment:', error);
-                alert('Error posting comment');
+                showSuccessBanner('Error posting comment');
             }
         }
 
@@ -1548,11 +1645,7 @@
             return Math.floor(seconds) + " seconds ago";
         }
 
-        // Post options
-        function editPost(postId) {
-            alert('Edit functionality coming soon!');
-            // TODO: Implement edit modal
-        }
+        // Post options - editPost defined below with full implementation
 
         async function archivePost(postId) {
             console.log('archivePost called with postId:', postId);
@@ -1575,7 +1668,7 @@
 
                 console.log('Archive response:', response.status);
                 if (response.ok) {
-                    alert('Post archived successfully!');
+                    sessionStorage.setItem('feedSuccess', 'Post archived successfully!');
                     location.reload();
                 } else {
                     console.error('Archive failed with status:', response.status);
@@ -1584,7 +1677,7 @@
                 }
             } catch (error) {
                 console.error('Error archiving post:', error);
-                alert('Error archiving post: ' + error.message);
+                showSuccessBanner('Error archiving post.');
             }
         }
 
@@ -1668,7 +1761,7 @@
                 });
 
                 if (response.ok) {
-                    alert('Post unarchived successfully!');
+                    sessionStorage.setItem('feedSuccess', 'Post unarchived successfully!');
                     location.reload();
                 }
             } catch (error) {
@@ -1690,7 +1783,7 @@
                 });
 
                 if (response.ok) {
-                    alert('Post deleted successfully!');
+                    showSuccessBanner('Post deleted successfully!');
                     loadArchive();
                 }
             } catch (error) {
@@ -1844,15 +1937,15 @@
                 });
                 
                 if (response.ok) {
-                    alert('Post updated successfully!');
+                    sessionStorage.setItem('feedSuccess', 'Post updated successfully!');
                     closeEditModal();
                     location.reload();
                 } else {
-                    alert('Error updating post. Please try again.');
+                    showSuccessBanner('Error updating post. Please try again.');
                 }
             } catch (error) {
                 console.error('Error updating post:', error);
-                alert('Error updating post. Please try again.');
+                showSuccessBanner('Error updating post. Please try again.');
             }
         }
 

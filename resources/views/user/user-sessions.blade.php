@@ -26,7 +26,7 @@
         
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
+            background: linear-gradient(135deg, rgba(26, 60, 94, 0.95), rgba(42, 92, 138, 0.95));
             color: var(--text);
             line-height: 1.5;
             height: 100vh;
@@ -370,8 +370,8 @@
         }
         
         .status-Active {
-            background: rgba(46, 204, 113, 0.2);
-            color: #2ecc71;
+            background: rgba(46, 204, 113, 0.3);
+            color: #7ef5b4;
         }
         
         .status-Inactive {
@@ -401,7 +401,7 @@
         
         .view-btn {
             background: rgba(52, 152, 219, 0.2);
-            color: #3498db;
+            color: var(--text);
         }
         
         .view-btn:hover {
@@ -588,6 +588,122 @@
         .modal-content::-webkit-scrollbar-thumb:hover {
             background: var(--accent-light);
         }
+
+        /* Table scroll wrapper */
+        .table-scroll-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 20px;
+        }
+
+        .table-scroll-wrapper .students-table {
+            margin-bottom: 0;
+        }
+
+        /* =====================================================
+           MOBILE STYLES — sessions page only (≤ 768px)
+           ===================================================== */
+        @media (max-width: 768px) {
+
+            body { overflow-x: hidden !important; }
+
+            .main-content {
+                overflow: visible !important;
+                height: auto !important;
+                flex: 1 0 auto !important;
+                min-height: calc(100vh - 60px);
+            }
+
+            .counseling-content {
+                overflow-y: visible !important;
+                overflow-x: visible !important;
+                padding: 14px !important;
+                flex: none !important;
+            }
+
+            /* Compact top bar */
+            .top-bar {
+                padding: 12px 16px !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+
+            .page-title h1 { font-size: 20px !important; }
+            .page-title p  { font-size: 13px !important; }
+
+            /* Tabs */
+            .content-header {
+                margin-bottom: 14px !important;
+            }
+
+            .tab-btn {
+                padding: 10px 14px !important;
+                font-size: 13px !important;
+            }
+
+            /* Content section padding */
+            .content-section {
+                padding: 14px !important;
+            }
+
+            /* Search */
+            .search-container {
+                margin-bottom: 14px !important;
+            }
+
+            /* Table scroll */
+            .table-scroll-wrapper {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                margin-bottom: 0 !important;
+            }
+
+            .students-table { min-width: 520px !important; }
+
+            /* Pagination */
+            .pagination { margin-top: 14px !important; }
+
+            /* Modal */
+            .modal {
+                align-items: flex-start !important;
+                padding: 70px 12px 24px !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+
+            .modal-content {
+                width: 100% !important;
+                max-width: 100% !important;
+                max-height: none !important;
+                border-radius: 12px !important;
+            }
+
+            .modal-header { padding: 14px 16px !important; }
+            .modal-header h2 { font-size: 18px !important; }
+            .modal-body { padding: 14px 16px !important; }
+
+            .modal-footer {
+                padding: 12px 16px 16px !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+
+            .modal-footer .btn {
+                flex: 1 !important;
+                min-width: 120px !important;
+                justify-content: center !important;
+            }
+
+            /* Detail rows in modal */
+            .detail-row {
+                flex-direction: column !important;
+                gap: 4px !important;
+            }
+
+            .detail-label {
+                width: auto !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -612,15 +728,16 @@
                 <!-- Search Input -->
                 <div class="search-container">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="search-input" placeholder="Search by diagnosis or status..." id="sessionSearch">
+                    <input type="text" class="search-input" placeholder="Search by concern or status..." id="sessionSearch">
                 </div>
                 
+                <div class="table-scroll-wrapper">
                 <table class="students-table">
                     <thead>
                         <tr>
                             <th>Counselor</th>
                             <th>Status</th>
-                            <th>Diagnosis</th>
+                            <th>Concern</th>
                             <th>Last Session</th>
                             <th>Actions</th>
                         </tr>
@@ -639,6 +756,7 @@
                         @endif
                     </tbody>
                 </table>
+                </div>
                 
                 <!-- Pagination -->
                 <div class="pagination">
@@ -671,7 +789,7 @@
                 id: {{ $session->id }},
                 counselor: "Admin",
                 status: "{{ $session->status }}",
-                diagnosis: "{{ $session->diagnosis }}",
+                concern: "{{ $session->concern }}",
                 lastSession: "{{ \Carbon\Carbon::parse($session->last_session)->format('M d, Y') }}",
                 note: "{{ $session->note }}"
             }{{ !$loop->last ? ',' : '' }}
@@ -722,7 +840,7 @@
                             </div>
                         </td>
                         <td><span class="status-badge status-${session.status}">${session.status}</span></td>
-                        <td>${session.diagnosis}</td>
+                        <td>${session.concern}</td>
                         <td>${session.lastSession}</td>
                         <td>
                             <div class="action-buttons-cell">
@@ -751,7 +869,7 @@
                 filteredSessions = [...sessions];
             } else {
                 filteredSessions = sessions.filter(session => 
-                    session.diagnosis.toLowerCase().includes(searchTerm) ||
+                    session.concern.toLowerCase().includes(searchTerm) ||
                     session.status.toLowerCase().includes(searchTerm)
                 );
             }
@@ -793,8 +911,8 @@
                     <div class="detail-value"><span class="status-badge status-${session.status}">${session.status}</span></div>
                 </div>
                 <div class="detail-row">
-                    <div class="detail-label">Diagnosis:</div>
-                    <div class="detail-value">${session.diagnosis}</div>
+                    <div class="detail-label">Concern:</div>
+                    <div class="detail-value">${session.concern}</div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Last Session:</div>
@@ -833,5 +951,6 @@
 
     </script>
     @include('components.confirm-modal')
+    @include('components.toast-notification')
 </body>
 </html>

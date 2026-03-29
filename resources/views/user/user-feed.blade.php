@@ -29,7 +29,7 @@
 
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
+            background: linear-gradient(135deg, rgba(26, 60, 94, 0.95), rgba(42, 92, 138, 0.95));
             color: var(--text);
             line-height: 1.5;
             height: 100vh;
@@ -324,6 +324,8 @@
         .post-content {
             margin-bottom: 15px;
             line-height: 1.6;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
 
         .post-images {
@@ -489,6 +491,8 @@
             margin-left: 42px;
             font-size: 14px;
             margin-bottom: 5px;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
 
         .comment-actions {
@@ -517,23 +521,26 @@
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 8px;
-            padding: 5px 0;
-            min-width: 150px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            padding: 4px 0;
+            width: max-content;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
             z-index: 1500;
             display: none;
             backdrop-filter: blur(10px);
+            overflow: hidden;
+            white-space: nowrap;
         }
 
         .context-menu-item {
-            padding: 10px 15px;
+            padding: 8px 10px;
             color: var(--text);
             cursor: pointer;
             transition: var(--transition);
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 14px;
+            gap: 8px;
+            font-size: 13px;
+            min-width: 0;
         }
 
         .context-menu-item:hover {
@@ -547,6 +554,58 @@
         .context-menu-item i {
             width: 16px;
         }
+
+        /* Chat-style modal (reused from public chat) */
+        .chat-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chat-modal-overlay.active { display: flex; }
+
+        .chat-modal-box {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 680px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(8px);
+        }
+
+        .chat-modal-header {
+            padding: 14px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .chat-modal-body { padding: 14px 18px; }
+
+        .chat-modal-footer {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .chat-btn { padding: 8px 14px; border-radius: 8px; cursor: pointer; border: none; }
+        .chat-btn-primary { background: linear-gradient(90deg,var(--accent),var(--accent-light)); color: white; }
+        .chat-btn-cancel { background: rgba(255,255,255,0.06); color: var(--text); }
+
+        .chat-edit-textarea { width: 100%; min-height: 100px; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); color: var(--text); }
+
+        /* Toast styles moved to toast-notification component */
 
         .empty-state {
             text-align: center;
@@ -867,6 +926,111 @@
         .image-preview-container::-webkit-scrollbar-thumb:hover {
             background: var(--accent-light);
         }
+
+        /* =====================================================
+           MOBILE STYLES — feed page only (≤ 768px)
+           ===================================================== */
+        @media (max-width: 768px) {
+
+            body { overflow-x: hidden !important; }
+
+            .main-content {
+                overflow: visible !important;
+                height: auto !important;
+                flex: 1 0 auto !important;
+                min-height: calc(100vh - 60px);
+            }
+
+            .feed-content {
+                overflow-y: visible !important;
+                overflow-x: visible !important;
+                padding: 14px !important;
+                flex: none !important;
+            }
+
+            /* Compact top bar */
+            .top-bar {
+                padding: 12px 16px !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+
+            .page-title h1 { font-size: 20px !important; }
+            .page-title p  { font-size: 13px !important; }
+
+            /* Post card */
+            .post-card {
+                padding: 14px !important;
+            }
+
+            /* Stack comment form on very small screens */
+            .comment-form {
+                flex-wrap: wrap !important;
+            }
+
+            .comment-input {
+                min-width: 0 !important;
+                flex: 1 1 100% !important;
+            }
+
+            .comment-btn {
+                flex-shrink: 0 !important;
+            }
+
+            /* Reduce reply indent so text stays inside card */
+            .comment.reply {
+                margin-left: 24px !important;
+            }
+
+            .comment-text {
+                margin-left: 36px !important;
+            }
+
+            .comment-actions {
+                margin-left: 36px !important;
+            }
+
+            /* Stack post images in single column */
+            .post-images.double,
+            .post-images.triple,
+            .post-images.multiple {
+                grid-template-columns: 1fr !important;
+            }
+
+            .post-image-wrapper {
+                height: 200px !important;
+            }
+
+            /* Modal */
+            .modal {
+                align-items: flex-start !important;
+                padding: 70px 12px 24px !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+
+            .modal-content {
+                width: 100% !important;
+                max-width: 100% !important;
+                max-height: none !important;
+                border-radius: 12px !important;
+            }
+
+            .modal-header { padding: 14px 16px !important; }
+            .modal-header h2 { font-size: 18px !important; }
+            .modal-body { padding: 14px 16px !important; }
+
+            .modal-footer {
+                padding: 12px 16px 16px !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+
+            .modal-footer .btn {
+                flex: 1 !important;
+                justify-content: center !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -983,6 +1147,23 @@
         </div>
     </div>
 
+    <!-- Edit Comment Modal -->
+    <div class="chat-modal-overlay" id="editCommentModal">
+        <div class="chat-modal-box">
+            <div class="chat-modal-header">
+                <h3><i class="fas fa-edit" style="margin-right:8px;color:var(--primary)"></i>Edit Comment</h3>
+                <button class="chat-modal-close" id="editCommentModalClose">&times;</button>
+            </div>
+            <div class="chat-modal-body">
+                <textarea class="chat-edit-textarea" id="editCommentTextarea" placeholder="Edit your comment..."></textarea>
+            </div>
+            <div class="chat-modal-footer">
+                <button class="chat-btn chat-btn-cancel" id="editCommentCancel">Cancel</button>
+                <button class="chat-btn chat-btn-primary" id="editCommentSave"><i class="fas fa-check" style="margin-right:6px"></i>Save</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Store all post images for viewer
         const postImages = {
@@ -997,17 +1178,50 @@
         let currentImageIndex = 0;
         let contextMenuCommentId = null;
         let contextMenuPostId = null;
+        const currentUserId = '{{ $currentUserId ?? '' }}';
 
         // Comment context menu
         function showCommentMenu(event, commentId, postId) {
             event.preventDefault();
+            showCommentMenuAt(event.pageX, event.pageY, commentId, postId);
+        }
+
+        function showCommentMenuAt(pageX, pageY, commentId, postId) {
             contextMenuCommentId = commentId;
             contextMenuPostId = postId;
-            
             const menu = document.getElementById('commentContextMenu');
+
+            // Show/hide options based on ownership
+            // menu items: Reply (0), Edit (1), Delete (2)
+            const editItem = menu.querySelectorAll('.context-menu-item')[1];
+            const deleteItem = menu.querySelectorAll('.context-menu-item')[2];
+            const replyItem = menu.querySelectorAll('.context-menu-item')[0];
+
+            // Determine ownership by comparing comment's data-user-id attribute if present
+            const commentEl = document.querySelector(`[data-comment-id="${commentId}"]`);
+            const messageUserId = commentEl ? commentEl.getAttribute('data-user-id') : null;
+            const isOwn = messageUserId && (String(messageUserId) === String(currentUserId));
+
+            if (isOwn) {
+                editItem.style.display = 'flex';
+                deleteItem.style.display = 'flex';
+                replyItem.style.display = 'none';
+            } else {
+                editItem.style.display = 'none';
+                deleteItem.style.display = 'none';
+                replyItem.style.display = 'flex';
+            }
+
             menu.style.display = 'block';
-            menu.style.left = event.pageX + 'px';
-            menu.style.top = event.pageY + 'px';
+            // clamp menu to viewport
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const menuW = menu.offsetWidth;
+            const menuH = menu.offsetHeight;
+            const x = Math.min(Math.max(8, pageX), vw - menuW - 8);
+            let y = Math.min(Math.max(8, pageY), vh - menuH - 8);
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
         }
 
         function hideCommentMenu() {
@@ -1021,15 +1235,131 @@
             }
         });
 
+        // Mobile: long-press or tap to open comment menu
+        (function() {
+            let touchTimer = null;
+            let touchMoved = false;
+            let startX = 0, startY = 0;
+            let suppressNextClick = false;
+
+            document.addEventListener('touchstart', function(e) {
+                const commentEl = e.target.closest('.comment');
+                if (!commentEl) return;
+                touchMoved = false;
+                startX = e.touches[0].pageX;
+                startY = e.touches[0].pageY;
+
+                touchTimer = setTimeout(function() {
+                    if (!touchMoved) {
+                        const commentId = commentEl.getAttribute('data-comment-id');
+                        const postEl = commentEl.closest('.post-card');
+                        const postId = postEl ? postEl.getAttribute('data-post-id') : null;
+                        showCommentMenuAt(startX, startY, commentId, postId);
+                        suppressNextClick = true;
+                    }
+                }, 500);
+            }, { passive: true });
+
+            document.addEventListener('touchmove', function(e) {
+                const dx = Math.abs(e.touches[0].pageX - startX);
+                const dy = Math.abs(e.touches[0].pageY - startY);
+                if (dx > 8 || dy > 8) {
+                    touchMoved = true;
+                    clearTimeout(touchTimer);
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', function(e) {
+                clearTimeout(touchTimer);
+                if (touchMoved) return;
+                // if tap (not long press), open menu briefly
+                const commentEl = e.target.closest('.comment');
+                if (commentEl) {
+                    const commentId = commentEl.getAttribute('data-comment-id');
+                    const postEl = commentEl.closest('.post-card');
+                    const postId = postEl ? postEl.getAttribute('data-post-id') : null;
+                    showCommentMenuAt(startX || e.changedTouches[0].pageX, startY || e.changedTouches[0].pageY, commentId, postId);
+                    suppressNextClick = true;
+                }
+            });
+
+            // ignore synthetic click after touch
+            document.addEventListener('click', function(e) {
+                if (suppressNextClick) { suppressNextClick = false; e.preventDefault(); return; }
+            }, true);
+        })();
+
         function replyToComment() {
             hideCommentMenu();
             showReplyForm(contextMenuCommentId, contextMenuPostId);
         }
 
+        // --- Toast helper (unified) ---
+        function showChatToast(message, isError = false) {
+            showToast(message, isError ? 'error' : 'success');
+        }
+
+        // --- Edit comment modal ---
+        const editCommentModal = document.getElementById('editCommentModal');
+        const editCommentTextarea = document.getElementById('editCommentTextarea');
+        const editCommentModalClose = document.getElementById('editCommentModalClose');
+        const editCommentCancel = document.getElementById('editCommentCancel');
+        const editCommentSave = document.getElementById('editCommentSave');
+        let editingCommentId = null;
+
+        function openEditCommentModal(commentId, currentText) {
+            editingCommentId = commentId;
+            editCommentTextarea.value = currentText;
+            editCommentModal.classList.add('active');
+            setTimeout(() => { editCommentTextarea.focus(); editCommentTextarea.select(); }, 50);
+        }
+        function closeEditCommentModal() {
+            editingCommentId = null;
+            editCommentModal.classList.remove('active');
+            editCommentTextarea.value = '';
+        }
+        editCommentModalClose.addEventListener('click', closeEditCommentModal);
+        editCommentCancel.addEventListener('click', closeEditCommentModal);
+        editCommentModal.addEventListener('click', function(e) { if (e.target === editCommentModal) closeEditCommentModal(); });
+        editCommentSave.addEventListener('click', async function() {
+            const newText = editCommentTextarea.value.trim();
+            if (!newText) return;
+            if (!editingCommentId) return closeEditCommentModal();
+            // Capture IDs BEFORE closeEditCommentModal() nulls editingCommentId
+            const commentIdToEdit = editingCommentId;
+            const postIdToReload = contextMenuPostId;
+            closeEditCommentModal();
+            try {
+                const response = await fetch(`/user/feed/comment/${commentIdToEdit}`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'X-HTTP-Method-Override': 'PUT'
+                    },
+                    body: JSON.stringify({ comment: newText })
+                });
+
+                if (response.ok) {
+                    showChatToast('Comment updated successfully.');
+                    await loadComments(postIdToReload);
+                } else {
+                    const errData = await response.json().catch(() => ({}));
+                    showChatToast('Failed to update comment: ' + (errData.error || response.status), true);
+                }
+            } catch (err) {
+                console.error('Error updating comment:', err);
+                showChatToast('Failed to update comment.', true);
+            }
+        });
+
         function editComment() {
             hideCommentMenu();
-            alert('Edit comment functionality coming soon!');
-            // TODO: Implement edit comment
+            const commentEl = document.querySelector(`[data-comment-id="${contextMenuCommentId}"]`);
+            if (!commentEl) return;
+            const txt = commentEl.querySelector('.comment-text') ? commentEl.querySelector('.comment-text').textContent.trim() : '';
+            openEditCommentModal(contextMenuCommentId, txt);
         }
 
         async function deleteComment() {
@@ -1049,7 +1379,6 @@
                 if (response.ok) {
                     // Reload comments
                     await loadComments(contextMenuPostId);
-                    
                     // Update comment count
                     const postCard = document.querySelector(`[data-post-id="${contextMenuPostId}"]`);
                     const commentCountSpan = postCard.querySelector('.post-actions .action-btn:nth-child(2) span');
@@ -1057,10 +1386,13 @@
                         const currentCount = parseInt(commentCountSpan.textContent) || 0;
                         commentCountSpan.textContent = Math.max(0, currentCount - 1);
                     }
+                    showChatToast('Comment deleted successfully.');
+                } else {
+                    showChatToast('Failed to delete comment.', true);
                 }
             } catch (error) {
                 console.error('Error deleting comment:', error);
-                alert('Failed to delete comment');
+                showChatToast('Failed to delete comment.', true);
             }
         }
 
@@ -1180,13 +1512,19 @@
             const commentDiv = document.createElement('div');
             commentDiv.className = isReply ? 'comment reply' : 'comment';
             commentDiv.setAttribute('data-comment-id', comment.id);
+            // attach user id for ownership checks
+            if (comment.user_id) commentDiv.setAttribute('data-user-id', comment.user_id);
+
+            const authorName = comment.author_name || 'Unknown User';
+            const initials = comment.author_initials || authorName.split(' ').map(s => s[0] || '').slice(0,2).join('').toUpperCase() || 'US';
+
             commentDiv.innerHTML = `
                 <div class="comment-header">
-                    <div class="comment-avatar">AD</div>
-                    <span class="comment-author">Admin</span>
+                    <div class="comment-avatar">${initials}</div>
+                    <span class="comment-author">${escapeHtml(authorName)}</span>
                     <span class="comment-time">${timeAgo(comment.created_at)}</span>
                 </div>
-                <div class="comment-text" oncontextmenu="showCommentMenu(event, ${comment.id}, ${postId}); return false;">${comment.comment}</div>
+                <div class="comment-text" oncontextmenu="showCommentMenu(event, ${comment.id}, ${postId}); return false;">${escapeHtml(comment.comment)}</div>
                 <div class="comment-actions">
                     <button class="comment-reply-btn" onclick="showReplyForm(${comment.id}, ${postId})">Reply</button>
                 </div>
@@ -1206,6 +1544,17 @@
                     renderComment(reply, repliesContainer, postId, true);
                 });
             }
+        }
+
+        // simple HTML escape to avoid XSS
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
 
         function showReplyForm(commentId, postId) {
@@ -1265,7 +1614,12 @@
                         commentCountSpan.textContent = currentCount + 1;
                     }
                 } else {
-                    alert('Failed to post comment');
+                    const data = await response.json();
+                    if (data.error === 'toxic_content') {
+                        showToast(data.message || 'Your comment contains inappropriate content.', 'error');
+                    } else {
+                        showToast('Failed to post comment', 'error');
+                    }
                 }
             } catch (error) {
                 console.error('Error adding comment:', error);
@@ -1295,5 +1649,6 @@
         }
     </script>
     @include('components.confirm-modal')
+    @include('components.toast-notification')
 </body>
 </html>

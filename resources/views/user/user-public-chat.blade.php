@@ -30,7 +30,7 @@
         
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
+            background: linear-gradient(135deg, rgba(26, 60, 94, 0.95), rgba(42, 92, 138, 0.95));
             color: var(--text);
             line-height: 1.5;
             height: 100vh;
@@ -501,22 +501,48 @@
             position: fixed;
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 8px 0;
+            border-radius: 6px;
+            padding: 4px 0;
             backdrop-filter: blur(10px);
-            z-index: 1000;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 99995;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
             display: none;
+            width: max-content;
         }
         
         .context-menu-item {
-            padding: 10px 16px;
+            padding: 7px 12px;
             cursor: pointer;
             transition: var(--transition);
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 14px;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        /* Mobile: compact vertical list with labels */
+        @media (max-width: 768px) {
+            .context-menu {
+                padding: 3px 0;
+                border-radius: 8px;
+                display: none;
+                flex-direction: column;
+            }
+            .context-menu.active-mobile {
+                display: flex;
+            }
+            .context-menu-item {
+                padding: 9px 14px;
+                font-size: 13px;
+                gap: 8px;
+                width: auto;
+                height: auto;
+                border-radius: 0;
+                justify-content: flex-start;
+            }
+            .context-menu-item span.menu-label {
+                display: inline;
+            }
         }
         
         .context-menu-item:hover {
@@ -530,6 +556,110 @@
         .context-menu-item.report {
             color: #f39c12;
         }
+
+        /* Edit / Confirm Modal */
+        .chat-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 99990;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-modal-overlay.active {
+            display: flex;
+        }
+        .chat-modal-box {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 460px;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            position: relative;
+            z-index: 99991;
+        }
+        .chat-modal-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-modal-header h3 {
+            font-size: 17px;
+            color: var(--text);
+            margin: 0;
+        }
+        .chat-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            line-height: 1;
+            transition: var(--transition);
+        }
+        .chat-modal-close:hover { color: white; }
+        .chat-modal-body {
+            padding: 20px;
+        }
+        .chat-modal-body p {
+            color: var(--text);
+            margin: 0 0 6px;
+            font-size: 15px;
+        }
+        .chat-edit-textarea {
+            width: 100%;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            padding: 10px 12px;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        .chat-edit-textarea:focus {
+            border-color: var(--primary);
+        }
+        .chat-modal-footer {
+            padding: 14px 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .chat-btn {
+            padding: 9px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .chat-btn-cancel {
+            background: rgba(255,255,255,0.1);
+            color: var(--text);
+        }
+        .chat-btn-cancel:hover { background: rgba(255,255,255,0.18); }
+        .chat-btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .chat-btn-primary:hover { background: var(--primary-hover); }
+        .chat-btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .chat-btn-danger:hover { background: #c0392b; }
         
         /* Modal Styles */
         .modal {
@@ -892,13 +1022,47 @@
     <!-- Context Menu -->
     <div class="context-menu" id="contextMenu">
         <div class="context-menu-item" id="editOption">
-            <i class="fas fa-edit"></i> Edit
+            <i class="fas fa-edit"></i><span class="menu-label"> Edit</span>
         </div>
         <div class="context-menu-item delete" id="deleteOption">
-            <i class="fas fa-trash"></i> Delete
+            <i class="fas fa-trash"></i><span class="menu-label"> Delete</span>
         </div>
         <div class="context-menu-item report" id="reportOption">
-            <i class="fas fa-flag"></i> Report
+            <i class="fas fa-flag"></i><span class="menu-label"> Report</span>
+        </div>
+    </div>
+
+    <!-- Edit Message Modal -->
+    <div class="chat-modal-overlay" id="editMessageModal">
+        <div class="chat-modal-box">
+            <div class="chat-modal-header">
+                <h3><i class="fas fa-edit" style="margin-right:8px;color:var(--primary)"></i>Edit Message</h3>
+                <button class="chat-modal-close" id="editModalClose">&times;</button>
+            </div>
+            <div class="chat-modal-body">
+                <textarea class="chat-edit-textarea" id="editMessageTextarea" placeholder="Type your message..."></textarea>
+            </div>
+            <div class="chat-modal-footer">
+                <button class="chat-btn chat-btn-cancel" id="editModalCancel">Cancel</button>
+                <button class="chat-btn chat-btn-primary" id="editModalSave"><i class="fas fa-check" style="margin-right:6px"></i>Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="chat-modal-overlay" id="deleteConfirmModal">
+        <div class="chat-modal-box">
+            <div class="chat-modal-header">
+                <h3><i class="fas fa-trash" style="margin-right:8px;color:#e74c3c"></i>Delete Message</h3>
+                <button class="chat-modal-close" id="deleteModalClose">&times;</button>
+            </div>
+            <div class="chat-modal-body">
+                <p>Are you sure you want to delete this message? This action cannot be undone.</p>
+            </div>
+            <div class="chat-modal-footer">
+                <button class="chat-btn chat-btn-cancel" id="deleteModalCancel">Cancel</button>
+                <button class="chat-btn chat-btn-danger" id="deleteModalConfirm"><i class="fas fa-trash" style="margin-right:6px"></i>Delete</button>
+            </div>
         </div>
     </div>
 
@@ -1173,68 +1337,204 @@
             sendMessage();
         });
         
-        // Context menu on right-click
+        // ── Context menu shared helper ──────────────────────────────────
+        function showContextMenuFor(messageElement, clientX, clientY) {
+            if (!messageElement || messageElement.classList.contains('admin')) return;
+
+            selectedMessageElement = messageElement;
+            selectedMessageId = messageElement.getAttribute('data-message-id');
+            const messageUserId = messageElement.getAttribute('data-user-id');
+
+            const isOwnMessage = messageUserId === currentUserId;
+            if (isOwnMessage) {
+                editOption.style.display = 'flex';
+                deleteOption.style.display = 'flex';
+                reportOption.style.display = 'none';
+            } else {
+                editOption.style.display = 'none';
+                deleteOption.style.display = 'none';
+                reportOption.style.display = 'flex';
+            }
+
+            // Position menu, keeping it within viewport
+            const isMobile = window.innerWidth <= 768;
+            // For mobile, limit menu width to the tapped message width and clamp inside it
+            if (isMobile) {
+                contextMenu.style.display = '';
+                contextMenu.classList.add('active-mobile');
+
+                // set a max width equal to the message bubble width so menu fits the card
+                const msgRect = messageElement.getBoundingClientRect();
+                contextMenu.style.maxWidth = Math.max(120, Math.floor(msgRect.width - 12)) + 'px';
+                // measure after applying class
+                const menuW = contextMenu.offsetWidth;
+                const menuH = contextMenu.offsetHeight;
+
+                // place the menu aligned to the left edge of the message bubble and clamp horizontally
+                const vw = window.innerWidth;
+                let x = Math.max(msgRect.left + 6, Math.min(clientX, msgRect.right - menuW - 6));
+
+                // prefer showing above the message if there's room, otherwise below
+                let y = msgRect.top - menuH - 4; // reduced vertical gap
+                if (y < 4) {
+                    y = msgRect.bottom + 4;
+                }
+
+                // final clamping to viewport
+                x = Math.max(6, Math.min(x, vw - menuW - 6));
+                contextMenu.style.left = x + 'px';
+                contextMenu.style.top = y + 'px';
+            } else {
+                contextMenu.classList.remove('active-mobile');
+                contextMenu.style.maxWidth = '';
+                contextMenu.style.display = 'block';
+                const menuW = contextMenu.offsetWidth;
+                const menuH = contextMenu.offsetHeight;
+                const vw = window.innerWidth;
+                const vh = window.innerHeight;
+                const x = Math.min(clientX, vw - menuW - 8);
+                const y = Math.min(clientY, vh - menuH - 8);
+                contextMenu.style.left = x + 'px';
+                contextMenu.style.top  = y + 'px';
+            }
+        }
+
+        // Context menu on right-click (desktop)
         document.addEventListener('contextmenu', function(e) {
             const messageElement = e.target.closest('.message');
-            
-            if (messageElement && !messageElement.classList.contains('admin')) {
+            if (messageElement) {
                 e.preventDefault();
-                selectedMessageElement = messageElement;
-                selectedMessageId = messageElement.getAttribute('data-message-id');
-                const messageUserId = messageElement.getAttribute('data-user-id');
-                const isAdminMessage = messageElement.getAttribute('data-is-admin') === '1';
-                
-                // Determine which options to show
-                const isOwnMessage = messageUserId === currentUserId;
-                
-                if (isOwnMessage) {
-                    // Own messages: show Edit and Delete
-                    editOption.style.display = 'flex';
-                    deleteOption.style.display = 'flex';
-                    reportOption.style.display = 'none';
-                } else {
-                    // Other users' or admin messages: show Report only
-                    editOption.style.display = 'none';
-                    deleteOption.style.display = 'none';
-                    reportOption.style.display = 'flex';
+                showContextMenuFor(messageElement, e.clientX, e.clientY);
+            }
+        });
+
+        // ── Touch support (mobile) ──────────────────────────────────────
+        let touchTimer = null;
+        let touchMoved = false;
+        let lastTouchX = 0;
+        let lastTouchY = 0;
+        let suppressNextClick = false;  // prevents synthetic click from hiding the menu
+
+        document.addEventListener('touchstart', function(e) {
+            const messageElement = e.target.closest('.message');
+            touchMoved = false;
+            if (!messageElement) return;
+
+            lastTouchX = e.touches[0].clientX;
+            lastTouchY = e.touches[0].clientY;
+
+            // Long-press (500 ms) → show menu
+            touchTimer = setTimeout(function() {
+                if (!touchMoved) {
+                    showContextMenuFor(messageElement, lastTouchX, lastTouchY);
+                    suppressNextClick = true;
                 }
-                
-                contextMenu.style.left = e.pageX + 'px';
-                contextMenu.style.top = e.pageY + 'px';
-                contextMenu.style.display = 'block';
+            }, 500);
+        }, { passive: true });
+
+        document.addEventListener('touchmove', function(e) {
+            const dx = e.touches[0].clientX - lastTouchX;
+            const dy = e.touches[0].clientY - lastTouchY;
+            if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                touchMoved = true;
+                clearTimeout(touchTimer);
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', function(e) {
+            clearTimeout(touchTimer);
+            if (touchMoved) return;
+
+            if (e.target.closest('#contextMenu')) return; // menu item tap → let click handle it
+
+            const messageElement = e.target.closest('.message');
+            if (messageElement) {
+                // Tap on message → show menu, suppress the follow-up click
+                suppressNextClick = true;
+                showContextMenuFor(messageElement, lastTouchX, lastTouchY);
+            } else {
+                // Tap outside → hide menu
+                hideContextMenu();
             }
         });
-        
-        // Hide context menu on click
-        document.addEventListener('click', function() {
-            contextMenu.style.display = 'none';
-        });
-        
-        // Edit message
-        editOption.addEventListener('click', function(e) {
-            e.stopPropagation();
-            contextMenu.style.display = 'none';
-            
-            if (selectedMessageElement) {
-                const messageContent = selectedMessageElement.querySelector('.message-content');
-                const currentText = messageContent.textContent.trim();
-                
-                const newText = prompt('Edit your message:', currentText);
-                if (newText !== null && newText.trim() !== '' && newText !== currentText) {
-                    updateMessage(selectedMessageId, newText.trim());
-                }
+
+        // Hide context menu on click (desktop). On mobile, suppressed after a touch show.
+        document.addEventListener('click', function(e) {
+            if (suppressNextClick) { suppressNextClick = false; return; }
+            if (!e.target.closest('#contextMenu')) {
+                contextMenu.style.display = 'none';
+                contextMenu.classList.remove('active-mobile');
             }
         });
-        
-        // Delete message
-        deleteOption.addEventListener('click', async function(e) {
-            e.stopPropagation();
+
+        function hideContextMenu() {
+            contextMenu.classList.remove('active-mobile');
             contextMenu.style.display = 'none';
-            
-            if (!selectedMessageId) {
-                return;
+        }
+        
+        // --- Toast helper ---
+        function showChatToast(message, isError = false) {
+            showToast(message, isError ? 'error' : 'success');
+        }
+
+        // --- Edit modal ---
+        const editMessageModal = document.getElementById('editMessageModal');
+        const editMessageTextarea = document.getElementById('editMessageTextarea');
+        const editModalClose = document.getElementById('editModalClose');
+        const editModalCancel = document.getElementById('editModalCancel');
+        const editModalSave = document.getElementById('editModalSave');
+        let editOriginalText = '';
+
+        function openEditModal(currentText) {
+            editOriginalText = currentText;
+            editMessageTextarea.value = currentText;
+            editMessageModal.classList.add('active');
+            setTimeout(() => { editMessageTextarea.focus(); editMessageTextarea.select(); }, 50);
+        }
+        function closeEditModal() {
+            editMessageModal.classList.remove('active');
+            editMessageTextarea.value = '';
+        }
+        editModalClose.addEventListener('click', closeEditModal);
+        editModalCancel.addEventListener('click', closeEditModal);
+        editMessageModal.addEventListener('click', function(e) {
+            if (e.target === editMessageModal) closeEditModal();
+        });
+        editModalSave.addEventListener('click', function() {
+            const newText = editMessageTextarea.value.trim();
+            if (!newText) return;
+            if (newText === editOriginalText) { closeEditModal(); return; }
+            closeEditModal();
+            updateMessage(selectedMessageId, newText);
+        });
+        editMessageTextarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                editModalSave.click();
             }
-            
+            if (e.key === 'Escape') closeEditModal();
+        });
+
+        // --- Delete confirm modal ---
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        const deleteModalClose = document.getElementById('deleteModalClose');
+        const deleteModalCancel = document.getElementById('deleteModalCancel');
+        const deleteModalConfirm = document.getElementById('deleteModalConfirm');
+
+        function openDeleteModal() {
+            deleteConfirmModal.classList.add('active');
+        }
+        function closeDeleteModal() {
+            deleteConfirmModal.classList.remove('active');
+        }
+        deleteModalClose.addEventListener('click', closeDeleteModal);
+        deleteModalCancel.addEventListener('click', closeDeleteModal);
+        deleteConfirmModal.addEventListener('click', function(e) {
+            if (e.target === deleteConfirmModal) closeDeleteModal();
+        });
+        deleteModalConfirm.addEventListener('click', async function() {
+            closeDeleteModal();
+            if (!selectedMessageId) return;
             try {
                 const response = await fetch(`/public-chat/${selectedMessageId}`, {
                     method: 'DELETE',
@@ -1242,21 +1542,41 @@
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     }
                 });
-                
                 if (response.ok) {
-                    window.location.reload();
+                    showChatToast('Message deleted successfully.');
+                    setTimeout(() => window.location.reload(), 1200);
                 } else {
+                    showChatToast('Failed to delete message. (Status: ' + response.status + ')', true);
                     console.error('Failed to delete message. Status: ' + response.status);
                 }
             } catch (error) {
+                showChatToast('Failed to delete message. Please try again.', true);
                 console.error('Failed to delete message: ' + error.message);
             }
+        });
+
+        // Edit message
+        editOption.addEventListener('click', function(e) {
+            e.stopPropagation();
+            hideContextMenu();
+            if (selectedMessageElement) {
+                const messageContent = selectedMessageElement.querySelector('.message-content');
+                openEditModal(messageContent.textContent.trim());
+            }
+        });
+        
+        // Delete message
+        deleteOption.addEventListener('click', function(e) {
+            e.stopPropagation();
+            hideContextMenu();
+            if (!selectedMessageId) return;
+            openDeleteModal();
         });
         
         // Report message
         reportOption.addEventListener('click', async function(e) {
             e.stopPropagation();
-            contextMenu.style.display = 'none';
+            hideContextMenu();
             
             if (!selectedMessageId) {
                 return;
@@ -1271,12 +1591,14 @@
                 });
                 
                 if (response.ok) {
-                    alert('Message reported successfully');
-                    window.location.reload();
+                    showChatToast('Message reported successfully.');
+                    setTimeout(() => window.location.reload(), 1500);
                 } else {
+                    showChatToast('Failed to report message. (Status: ' + response.status + ')', true);
                     console.error('Failed to report message. Status: ' + response.status);
                 }
             } catch (error) {
+                showChatToast('Failed to report message. Please try again.', true);
                 console.error('Failed to report message: ' + error.message);
             }
         });
@@ -1367,18 +1689,19 @@
                 });
                 
                 if (response.ok) {
-                    window.location.reload();
+                    showChatToast('Message updated successfully.');
+                    setTimeout(() => window.location.reload(), 1200);
                 } else {
                     const data = await response.json();
                     if (data.error === 'toxic_content') {
                         showToxicModal(data.message);
                     } else {
-                        alert('Failed to update message.');
+                        showChatToast('Failed to update message.', true);
                     }
                 }
             } catch (error) {
                 console.error('Error updating message:', error);
-                alert('Failed to update message.');
+                showChatToast('Failed to update message.', true);
             }
         }
         
@@ -1387,5 +1710,8 @@
         
         }); // End of DOMContentLoaded
     </script>
+
+    @include('components.confirm-modal')
+    @include('components.toast-notification')
 </body>
 </html>

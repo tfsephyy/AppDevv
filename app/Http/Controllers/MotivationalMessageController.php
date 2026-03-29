@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\MotivationalMessage;
+use App\Models\Notification;
+use App\Models\UserAccount;
 
 class MotivationalMessageController extends Controller
 {
@@ -35,6 +37,19 @@ class MotivationalMessageController extends Controller
             'message' => $validated['message'],
             'archived' => false,
         ]);
+
+        // Notify all students about new motivational message
+        $allStudents = UserAccount::all();
+        $snippet = \Illuminate\Support\Str::limit($validated['message'], 80);
+        foreach ($allStudents as $student) {
+            Notification::create([
+                'user_id' => $student->id,
+                'title' => 'New Motivational Message',
+                'message' => '"' . $snippet . '"',
+                'type' => 'motivational',
+                'read' => false,
+            ]);
+        }
 
         return redirect()->route('motivational')->with('success', 'Motivational message added successfully!');
     }
@@ -81,5 +96,14 @@ class MotivationalMessageController extends Controller
         $message->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    public function random()
+    {
+        $message = MotivationalMessage::where('archived', false)->inRandomOrder()->first();
+        if ($message) {
+            return response()->json(['message' => $message->message]);
+        }
+        return response()->json(['message' => null]);
     }
 }

@@ -12,6 +12,8 @@ class Schedule extends Model
         'time',
         'duration',
         'status',
+        'proposed_date',
+        'proposed_time',
     ];
 
     public function userAccount()

@@ -29,7 +29,7 @@
 
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
+            background: linear-gradient(135deg, rgba(26, 60, 94, 0.95), rgba(42, 92, 138, 0.95));
             color: var(--text);
             line-height: 1.5;
             height: 100vh;
@@ -890,6 +890,7 @@
                     {{ session('success') }}
                 </div>
             @endif
+            <div id="dynamicSuccessBanner" style="display:none; background: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 15px; border-radius: 8px; margin-bottom: 20px; transition: opacity 0.5s ease-out;"></div>
 
             <div class="content-header">
                 <div class="content-tabs">
@@ -1200,6 +1201,22 @@
     <script>
         let currentMessageId = null;
 
+        function showSuccessBanner(msg) {
+            const banner = document.getElementById('dynamicSuccessBanner');
+            banner.textContent = msg;
+            banner.style.display = 'block';
+            banner.style.opacity = '1';
+            setTimeout(() => { banner.style.opacity = '0'; setTimeout(() => { banner.style.display = 'none'; }, 500); }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const msg = sessionStorage.getItem('motivationalSuccess');
+            if (msg) {
+                sessionStorage.removeItem('motivationalSuccess');
+                showSuccessBanner(msg);
+            }
+        });
+
         // Close view modal
         function closeViewModal() {
             document.getElementById('viewModal').style.display = 'none';
@@ -1215,7 +1232,6 @@
                 document.getElementById('viewModal').style.display = 'flex';
             } catch (error) {
                 console.error('Error loading message:', error);
-                alert('Error loading message');
             }
         }
 
@@ -1232,13 +1248,14 @@
                     });
 
                     if (response.ok) {
-                        location.reload();
-                    } else {
-                        alert('Error deleting message');
+                        const messageRow = document.querySelector(`[data-message-id="${id}"]`);
+                        if (messageRow) {
+                            messageRow.remove();
+                        }
+                        showSuccessBanner('Message deleted successfully!');
                     }
                 } catch (error) {
                     console.error('Error deleting message:', error);
-                    alert('Error deleting message');
                 }
             }
         }
@@ -1256,19 +1273,14 @@
                     });
 
                     if (response.ok) {
-                        // Remove the message row from the DOM
                         const messageRow = document.querySelector(`[data-message-id="${id}"]`);
                         if (messageRow) {
                             messageRow.remove();
                         }
-                        // Show success message
-                        alert('Message unarchived successfully!');
-                    } else {
-                        alert('Error unarchiving message');
+                        showSuccessBanner('Message unarchived successfully!');
                     }
                 } catch (error) {
                     console.error('Error unarchiving message:', error);
-                    alert('Error unarchiving message');
                 }
             }
         }

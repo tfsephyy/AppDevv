@@ -6,6 +6,10 @@ use Illuminate\Http\Request;
 use App\Models\Post;
 use App\Models\PostLike;
 use App\Models\PostComment;
+use App\Models\Admin;
+use App\Models\Notification;
+use App\Models\UserAccount;
+use App\Services\MessageFilterService;
 use Illuminate\Support\Facades\Storage;
 
 class FeedController extends Controller
@@ -61,11 +65,27 @@ class FeedController extends Controller
             }
         }
 
-        Post::create([
+        $post = Post::create([
             'user_id' => session('user_id'),
             'content' => $validated['content'],
             'images' => $images,
         ]);
+
+        // If admin posted, notify all students
+        if (session('admin_logged_in')) {
+            $allStudents = UserAccount::all();
+            $snippet = \Illuminate\Support\Str::limit($validated['content'], 80);
+            foreach ($allStudents as $student) {
+                Notification::create([
+                    'user_id' => $student->id,
+                    'title' => 'New Post from Admin',
+                    'message' => 'Admin posted: "' . $snippet . '"',
+                    'type' => 'feed_post',
+                    'related_id' => $post->id,
+                    'read' => false,
+                ]);
+            }
+        }
 
         return redirect()->route('feed')->with('success', 'Post created successfully!');
     }
@@ -104,7 +124,23 @@ class FeedController extends Controller
             'parent_id' => 'nullable|exists:post_comments,id',
         ]);
 
-        $userId = session('user_id', $request->ip());
+        // Check for toxic content
+        $filter = app(MessageFilterService::class);
+        $validationResult = $filter->validateMessage($validated['comment']);
+        if (!$validationResult['valid']) {
+            return response()->json([
+                'success' => false,
+                'error' => 'toxic_content',
+                'message' => $validationResult['error']
+            ], 400);
+        }
+
+        // Determine user identity consistently
+        if (session('admin_logged_in')) {
+            $userId = 'admin_' . session('admin_id');
+        } else {
+            $userId = session('user_id', $request->ip());
+        }
 
         $comment = PostComment::create([
             'post_id' => $id,
@@ -113,9 +149,15 @@ class FeedController extends Controller
             'comment' => $validated['comment'],
         ]);
 
+        // Resolve author name for response
+        $authorName = $this->resolveAuthorName($userId);
+
         return response()->json([
             'success' => true,
-            'comment' => $comment
+            'comment' => array_merge($comment->toArray(), [
+                'author_name' => $authorName,
+                'author_initials' => strtoupper(collect(explode(' ', $authorName))->map(fn($w) => substr($w, 0, 1))->take(2)->join('')),
+            ])
         ]);
     }
 
@@ -126,8 +168,46 @@ class FeedController extends Controller
             ->with('replies')
             ->orderBy('created_at', 'desc')
             ->get();
-        
+
+        // Resolve author names for all comments and replies
+        $comments->transform(function ($comment) {
+            return $this->appendAuthorInfo($comment);
+        });
+
         return response()->json($comments);
+    }
+
+    /**
+     * Resolve author name from user_id (handles both admin and student).
+     */
+    private function resolveAuthorName($userId)
+    {
+        if ($userId && str_starts_with((string)$userId, 'admin_')) {
+            $adminId = str_replace('admin_', '', $userId);
+            $admin = Admin::find($adminId);
+            return $admin ? $admin->name : 'Admin';
+        }
+
+        $user = UserAccount::find($userId);
+        return $user ? $user->name : 'Unknown User';
+    }
+
+    /**
+     * Append author_name and author_initials to a comment and its replies.
+     */
+    private function appendAuthorInfo($comment)
+    {
+        $name = $this->resolveAuthorName($comment->user_id);
+        $comment->author_name = $name;
+        $comment->author_initials = strtoupper(collect(explode(' ', $name))->map(fn($w) => substr($w, 0, 1))->take(2)->join(''));
+
+        if ($comment->relationLoaded('replies')) {
+            $comment->replies->transform(function ($reply) {
+                return $this->appendAuthorInfo($reply);
+            });
+        }
+
+        return $comment;
     }
 
     public function archive($id)
@@ -207,6 +287,27 @@ class FeedController extends Controller
         $comment->delete();
         
         return response()->json(['success' => true]);
+    }
+
+    public function updateComment(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'comment' => 'required|string',
+        ]);
+
+        $comment = PostComment::findOrFail($id);
+
+        $isAdmin = session('admin_logged_in', false);
+        $currentUserId = $isAdmin ? 'admin_' . session('admin_id') : session('user_id', $request->ip());
+
+        // Allow admin or owner to update
+        if ($isAdmin || (string)$comment->user_id === (string)$currentUserId) {
+            $comment->comment = $validated['comment'];
+            $comment->save();
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['error' => 'Unauthorized'], 403);
     }
 
     public function destroy($id)

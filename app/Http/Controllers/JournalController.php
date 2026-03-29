@@ -8,6 +8,7 @@ use App\Models\Post;
 use App\Models\JournalLike;
 use App\Models\JournalComment;
 use App\Models\UserAccount;
+use App\Services\MessageFilterService;
 use Illuminate\Support\Facades\Cache;
 
 class JournalController extends Controller
@@ -114,6 +115,29 @@ class JournalController extends Controller
         return response()->json($journals);
     }
 
+    public function getMyJournals()
+    {
+        $userId = session('user_id', request()->ip());
+        
+        $journals = Journal::where('user_id', $userId)
+            ->where('archived', false)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($journal) {
+                return [
+                    'id' => $journal->id,
+                    'title' => $journal->title,
+                    'content' => $journal->content,
+                    'is_public' => $journal->is_public,
+                    'is_posted' => $journal->is_posted,
+                    'formatted_date' => $journal->created_at->format('M d, Y • g:i A'),
+                    'created_at' => $journal->created_at
+                ];
+            });
+        
+        return response()->json($journals);
+    }
+
     public function unarchive($id)
     {
         $userId = session('user_id', request()->ip());
@@ -158,7 +182,7 @@ class JournalController extends Controller
 
     public function getPublicJournals()
     {
-        $userId = session('user_id') ?? request()->ip(); // Fallback to IP if no session
+        $userId = session('admin_logged_in') ? 'admin_' . session('admin_id') : (session('user_id') ?? request()->ip());
 
         // Use a cache key that includes a global invalidation timestamp
         $invalidationKey = Cache::get('public_journals_invalidation', 0);
@@ -191,9 +215,17 @@ class JournalController extends Controller
                             'comments_count' => $journal->comments->count(),
                             'is_liked' => $journal->likes->where('user_id', $userId)->count() > 0,
                             'comments' => $journal->comments->take(5)->map(function ($comment) use ($userId) { // Limit comments for performance
+                                // Resolve name from UserAccount for consistency
+                                $resolvedName = $comment->user_name;
+                                if ($comment->user_id && !str_starts_with((string)$comment->user_id, 'admin_')) {
+                                    $commenter = UserAccount::find($comment->user_id);
+                                    if ($commenter) {
+                                        $resolvedName = $commenter->name;
+                                    }
+                                }
                                 return [
                                     'id' => $comment->id,
-                                    'user_name' => $comment->user_name ?? 'User',
+                                    'user_name' => $resolvedName ?? 'User',
                                     'comment' => $comment->comment,
                                     'created_at' => $comment->created_at->diffForHumans(),
                                     'is_own' => $comment->user_id == $userId,
@@ -274,8 +306,26 @@ class JournalController extends Controller
             'comment' => 'required|string|max:1000',
         ]);
         
-        $userId = session('user_id', request()->ip());
-        $userName = session('user_name', 'User');
+        // Check for toxic content
+        $filter = app(MessageFilterService::class);
+        $validationResult = $filter->validateMessage($validated['comment']);
+        if (!$validationResult['valid']) {
+            return response()->json([
+                'success' => false,
+                'error' => 'toxic_content',
+                'message' => $validationResult['error']
+            ], 400);
+        }
+        
+        // Determine user identity consistently
+        if (session('admin_logged_in')) {
+            $userId = 'admin_' . session('admin_id');
+            $userName = session('admin_name', 'Admin');
+        } else {
+            $userId = session('user_id', request()->ip());
+            $userAccount = UserAccount::find($userId);
+            $userName = $userAccount ? $userAccount->name : session('user_name', 'User');
+        }
         
         $comment = JournalComment::create([
             'journal_id' => $id,
@@ -298,17 +348,21 @@ class JournalController extends Controller
 
     public function deleteComment($id)
     {
-        $userId = session('user_id', request()->ip());
+        $userId = session('admin_logged_in') ? 'admin_' . session('admin_id') : session('user_id', request()->ip());
         $comment = JournalComment::findOrFail($id);
         
-        // Only allow deleting own comments
-        if ($comment->user_id != $userId) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        // Allow admin or owner to delete
+        if (session('admin_logged_in') || $comment->user_id == $userId) {
+            $comment->delete();
+            return response()->json(['success' => true]);
         }
         
-        $comment->delete();
-        
-        return response()->json(['success' => true]);
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    public function adminIndex()
+    {
+        return view('admin-journal');
     }
 }
 

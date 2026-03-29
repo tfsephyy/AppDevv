@@ -12,8 +12,8 @@
             --accent: #4a90e2;
             --accent-light: #6bb3ff;
             --accent-dark: #1e5f99;
-            --text: #e6f0f7;
-            --text-muted: #b8d0e0;
+            --text: #ffffff;
+            --text-muted: #cce4f7;
             --card-bg: rgba(255, 255, 255, 0.1);
             --glass: rgba(255, 255, 255, 0.15);
             --radius: 12px;
@@ -28,12 +28,12 @@
         
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(135deg, #1a3c5e 0%, #2a5c8a 50%, #1a3c5e 100%);
+            background: linear-gradient(135deg, #020c1b 0%, #0d3b8e 25%, #1565c0 55%, #00838f 82%, #004d61 100%);
             color: var(--text);
             line-height: 1.5;
             overflow-x: hidden;
             padding-top: 100px;
-        }
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
         
         .container {
             max-width: 1200px;
@@ -47,7 +47,7 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            background: linear-gradient(135deg, rgba(26, 60, 94, 0.95), rgba(42, 92, 138, 0.95));
+            background: linear-gradient(135deg, rgba(2, 12, 27, 0.97) 0%, rgba(13, 59, 142, 0.97) 40%, rgba(21, 101, 192, 0.97) 70%, rgba(0, 77, 97, 0.97) 100%);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
             padding: 15px 0;

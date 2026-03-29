@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_account_id')->constrained('user_accounts')->onDelete('cascade');
             $table->enum('status', ['Active', 'Inactive', 'Completed'])->default('Active');
-            $table->string('diagnosis');
+            $table->string('concern');
             $table->date('last_session');
             $table->text('note')->nullable();
             $table->timestamps();

@@ -40,6 +40,7 @@ Route::post('/feed/{id}/like', [FeedController::class, 'like'])->name('feed.like
 Route::post('/feed/{id}/comment', [FeedController::class, 'comment'])->name('feed.comment');
 Route::get('/feed/{id}/comments', [FeedController::class, 'getComments'])->name('feed.comments');
 Route::delete('/feed/comment/{id}', [FeedController::class, 'destroyComment'])->name('feed.comment.destroy');
+Route::put('/feed/comment/{id}', [FeedController::class, 'updateComment'])->name('feed.comment.update');
 Route::post('/feed/{id}/archive', [FeedController::class, 'archive'])->name('feed.archive');
 Route::post('/feed/{id}/unarchive', [FeedController::class, 'unarchive'])->name('feed.unarchive');
 Route::put('/feed/{id}', [FeedController::class, 'update'])->name('feed.update');
@@ -68,8 +69,16 @@ Route::get('/scheduling', [ScheduleController::class, 'index'])->name('schedulin
 Route::post('/scheduling', [ScheduleController::class, 'store'])->name('scheduling.store');
 Route::get('/scheduling/booked-slots', [ScheduleController::class, 'getBookedSlots'])->name('scheduling.booked');
 Route::get('/scheduling/user-accounts', [ScheduleController::class, 'getUserAccounts'])->name('scheduling.users');
+Route::get('/scheduling/pending-count', [ScheduleController::class, 'pendingCount'])->name('scheduling.pending-count');
+Route::get('/admin/notifications', [ScheduleController::class, 'adminNotifications'])->name('admin.notifications');
+Route::post('/admin/notifications/read-all', [ScheduleController::class, 'markAllAdminNotificationsRead'])->name('admin.notifications.read-all');
+Route::post('/admin/notifications/{id}/read', [ScheduleController::class, 'adminNotificationRead'])->name('admin.notifications.read');
+Route::get('/admin/notifications/unread-count', [ScheduleController::class, 'adminUnreadCount'])->name('admin.notifications.unread-count');
 Route::get('/scheduling/{id}', [ScheduleController::class, 'show'])->name('scheduling.show');
 Route::post('/scheduling/{id}/complete', [ScheduleController::class, 'complete'])->name('scheduling.complete');
+Route::post('/scheduling/{id}/accept', [ScheduleController::class, 'accept'])->name('scheduling.accept');
+Route::post('/scheduling/{id}/deny', [ScheduleController::class, 'deny'])->name('scheduling.deny');
+Route::post('/scheduling/{id}/reschedule', [ScheduleController::class, 'reschedule'])->name('scheduling.reschedule');
 Route::post('/scheduling/{id}/unarchive', [ScheduleController::class, 'unarchive'])->name('scheduling.unarchive');
 Route::delete('/scheduling/{id}', [ScheduleController::class, 'destroy'])->name('scheduling.destroy');
 Route::get('/scheduling-archive', [ScheduleController::class, 'archive'])->name('scheduling.archive');
@@ -83,6 +92,7 @@ Route::post('/user/journal/{id}/archive', [JournalController::class, 'archive'])
 Route::post('/user/journal/{id}/unarchive', [JournalController::class, 'unarchive'])->name('user.journal.unarchive');
 Route::delete('/user/journal/{id}', [JournalController::class, 'destroy'])->name('user.journal.destroy');
 Route::post('/user/journal/{id}/post', [JournalController::class, 'post'])->name('user.journal.post');
+Route::get('/user/journal-list', [JournalController::class, 'getMyJournals'])->name('user.journal.list');
 Route::get('/user/journal-archive', [JournalController::class, 'getArchived'])->name('user.journal.archived');
 Route::get('/user/journal-public', [JournalController::class, 'getPublicJournals'])->name('user.journal.public');
 Route::post('/user/journal/{id}/toggle-public', [JournalController::class, 'togglePublic'])->name('user.journal.toggle-public');
@@ -95,6 +105,12 @@ Route::post('/user/schedules', [UserScheduleController::class, 'store'])->name('
 Route::put('/user/schedules/{id}', [UserScheduleController::class, 'update'])->name('user.schedules.update');
 Route::delete('/user/schedules/{id}', [UserScheduleController::class, 'destroy'])->name('user.schedules.destroy');
 Route::get('/user/schedules/booked-slots', [UserScheduleController::class, 'getBookedSlots'])->name('user.schedules.booked');
+Route::post('/user/schedules/{id}/accept-reschedule', [UserScheduleController::class, 'acceptReschedule'])->name('user.schedules.accept-reschedule');
+Route::post('/user/schedules/{id}/cancel-reschedule', [UserScheduleController::class, 'cancelReschedule'])->name('user.schedules.cancel-reschedule');
+Route::post('/user/schedules/{id}/cancel', [UserScheduleController::class, 'cancel'])->name('user.schedules.cancel');
+Route::post('/user/schedules/{id}/request-reschedule', [UserScheduleController::class, 'requestReschedule'])->name('user.schedules.request-reschedule');
+Route::post('/scheduling/{id}/accept-student-reschedule', [ScheduleController::class, 'acceptStudentReschedule'])->name('scheduling.accept-student-reschedule');
+Route::post('/scheduling/{id}/deny-student-reschedule', [ScheduleController::class, 'denyStudentReschedule'])->name('scheduling.deny-student-reschedule');
 
 Route::get('/user/sessions', [UserSessionController::class, 'index'])->name('user.sessions');
 
@@ -103,6 +119,7 @@ Route::post('/user/feed/{id}/like', [UserFeedController::class, 'like'])->name('
 Route::post('/user/feed/{id}/comment', [UserFeedController::class, 'comment'])->name('user.feed.comment');
 Route::get('/user/feed/{id}/comments', [UserFeedController::class, 'getComments'])->name('user.feed.comments');
 Route::delete('/user/feed/comment/{id}', [FeedController::class, 'destroyComment'])->name('user.feed.comment.destroy');
+Route::match(['post','put'], '/user/feed/comment/{id}', [FeedController::class, 'updateComment'])->name('user.feed.comment.update');
 
 Route::get('/user/information', [InformationController::class, 'index'])->name('user.information');
 
@@ -132,6 +149,8 @@ Route::get('/user/notifications/unread-count', [App\Http\Controllers\Notificatio
 Route::get('/admin/profile', [App\Http\Controllers\AdminProfileController::class, 'show'])->name('admin.profile.show');
 Route::post('/admin/profile', [App\Http\Controllers\AdminProfileController::class, 'update'])->name('admin.profile.update');
 
+Route::get('/admin/journal', [JournalController::class, 'adminIndex'])->name('admin.journal');
+
 Route::get('/motivational', [App\Http\Controllers\MotivationalMessageController::class, 'index'])->name('motivational');
 Route::get('/motivational/archive', [App\Http\Controllers\MotivationalMessageController::class, 'archive'])->name('motivational.archive');
 Route::post('/motivational', [App\Http\Controllers\MotivationalMessageController::class, 'store'])->name('motivational.store');
@@ -140,5 +159,6 @@ Route::put('/motivational/{id}', [App\Http\Controllers\MotivationalMessageContro
 Route::post('/motivational/{id}/archive', [App\Http\Controllers\MotivationalMessageController::class, 'archiveMessage'])->name('motivational.archive.message');
 Route::post('/motivational/{id}/unarchive', [App\Http\Controllers\MotivationalMessageController::class, 'unarchive'])->name('motivational.unarchive');
 Route::delete('/motivational/{id}', [App\Http\Controllers\MotivationalMessageController::class, 'destroy'])->name('motivational.destroy');
+Route::get('/motivational-random', [App\Http\Controllers\MotivationalMessageController::class, 'random'])->name('motivational.random');
 
 Route::post('/logout', [LogoutController::class, 'logout'])->name('logout');

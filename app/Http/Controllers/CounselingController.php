@@ -32,7 +32,7 @@ class CounselingController extends Controller
         $validated = $request->validate([
             'schoolId' => 'required|exists:user_accounts,schoolId',
             'status' => 'required|in:Active,Inactive,Completed',
-            'diagnosis' => 'required|string|max:255',
+            'concern' => 'required|string|max:255',
             'last_session' => 'required|date',
             'note' => 'nullable|string',
         ]);
@@ -42,7 +42,7 @@ class CounselingController extends Controller
         $session = CounselingSession::create([
             'user_account_id' => $userAccount->id,
             'status' => $validated['status'],
-            'diagnosis' => $validated['diagnosis'],
+            'concern' => $validated['concern'],
             'last_session' => $validated['last_session'],
             'note' => $validated['note'],
         ]);
@@ -71,7 +71,7 @@ class CounselingController extends Controller
     {
         $validated = $request->validate([
             'status' => 'required|in:Active,Inactive,Completed',
-            'diagnosis' => 'required|string|max:255',
+            'concern' => 'required|string|max:255',
             'last_session' => 'required|date',
             'note' => 'nullable|string',
         ]);
@@ -127,7 +127,7 @@ class CounselingController extends Controller
         $schedules = Schedule::where('user_account_id', $userAccount->id)
             ->orderBy('date', 'desc')
             ->orderBy('time', 'desc')
-            ->limit(10)
+            ->limit(5)
             ->get(['date', 'time']);
         
         return response()->json($schedules);

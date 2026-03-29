@@ -26,7 +26,7 @@
         
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
+            background: linear-gradient(135deg, rgba(26, 60, 94, 0.95), rgba(42, 92, 138, 0.95));
             color: var(--text);
             line-height: 1.5;
             height: 100vh;
@@ -213,6 +213,26 @@
             flex: 1;
             padding: 30px;
             overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) rgba(255, 255, 255, 0.05);
+        }
+
+        .scheduling-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scheduling-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .scheduling-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--accent-light), var(--accent));
+            border-radius: 10px;
+        }
+
+        .scheduling-content::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, var(--accent), var(--accent-dark));
         }
         
         .content-header {
@@ -304,7 +324,37 @@
         .search-input::placeholder {
             color: var(--text-muted);
         }
-        
+
+        /* Search + action button row */
+        .search-action-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-action-row .search-container {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        /* Table scroll wrapper — isolates horizontal scroll to the table only */
+        .table-scroll-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 20px;
+        }
+
+        .table-scroll-wrapper .schedules-table {
+            margin-bottom: 0;
+        }
+
+        /* Mobile-only Add Schedule button (hidden on desktop) */
+        .action-buttons-mobile { display: none; flex-shrink: 0; }
+
+        /* Desktop-only Add Schedule button in content-header (hidden on mobile) */
+        .action-buttons-desktop { display: block; }
+
         /* Table */
         .schedules-table {
             width: 100%;
@@ -350,12 +400,37 @@
         
         .status-upcoming {
             background: rgba(74, 144, 226, 0.2);
-            color: #6bb3ff;
+            color: #ffffff;
         }
         
         .status-completed {
             background: rgba(46, 213, 115, 0.2);
             color: #2ed573;
+        }
+
+        .status-pending {
+            background: rgba(241, 196, 15, 0.2);
+            color: #f1c40f;
+        }
+
+        .status-denied {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+
+        .status-cancelled {
+            background: rgba(127, 140, 141, 0.25);
+            color: #95a5a6;
+        }
+
+        .status-reschedule {
+            background: rgba(155, 89, 182, 0.2);
+            color: #9b59b6;
+        }
+
+        /* History section: make status text white for readability */
+        #historySchedules .status-badge {
+            color: #ffffff !important;
         }
         
         /* Action Buttons */
@@ -375,7 +450,7 @@
         
         .edit-btn {
             background: rgba(74, 144, 226, 0.2);
-            color: #6bb3ff;
+            color: #ffffff;
         }
         
         .edit-btn:hover {
@@ -438,12 +513,32 @@
         }
         
         .modal-content {
-            background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
+            background: linear-gradient(135deg, rgba(26, 60, 94, 0.95), rgba(42, 92, 138, 0.95));
             border-radius: 12px;
             width: 90%;
             max-width: 800px;
             max-height: 90vh;
             overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-dark) rgba(255, 255, 255, 0.15);
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #ffffff99, var(--accent-dark));
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-dark);
         }
         
         .modal-header {
@@ -802,6 +897,157 @@
             margin-bottom: 10px;
             color: var(--text);
         }
+
+        /* =====================================================
+           MOBILE STYLES — scheduling page only (≤ 768px)
+           ===================================================== */
+        @media (max-width: 768px) {
+
+            /* Let body scroll; undo fixed-height inner layout */
+            body { overflow-x: hidden !important; }
+
+            .main-content {
+                overflow: visible !important;
+                height: auto !important;
+                flex: 1 0 auto !important;
+                min-height: calc(100vh - 60px);
+            }
+
+            .scheduling-content {
+                overflow-y: visible !important;
+                overflow-x: visible !important;
+                padding: 14px !important;
+                flex: none !important;
+            }
+
+            /* Compact top bar */
+            .top-bar {
+                padding: 12px 16px !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+
+            .page-title h1 { font-size: 20px !important; }
+            .page-title p  { font-size: 13px !important; }
+
+            /* ── 1. Tabs row — full width, equal buttons ── */
+            .content-header {
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 0 !important;
+                margin-bottom: 14px !important;
+            }
+
+            .content-tabs {
+                display: flex !important;
+                gap: 6px !important;
+                width: 100% !important;
+            }
+
+            .tab-btn {
+                flex: 1 !important;
+                padding: 10px 6px !important;
+                font-size: 13px !important;
+                text-align: center !important;
+            }
+
+            /* ── 2. Search + Add Schedule row ── */
+            .search-action-row {
+                gap: 8px !important;
+                margin-bottom: 14px !important;
+            }
+
+            .search-action-row .search-container {
+                margin-bottom: 0 !important;
+            }
+
+            /* Show mobile button, hide desktop button */
+            .action-buttons-mobile { display: flex !important; }
+            .action-buttons-desktop { display: none !important; }
+
+            .action-buttons-mobile .btn,
+            .action-buttons .btn {
+                white-space: nowrap !important;
+                padding: 10px 14px !important;
+                font-size: 13px !important;
+            }
+
+            /* ── 3. Table scroll — only the wrapper scrolls ── */
+            /* NOTE: do NOT set display:block on .content-section —
+               that would override style="display:none" on history tab */
+            .table-scroll-wrapper {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                margin-bottom: 14px !important;
+            }
+
+            .schedules-table { min-width: 520px !important; }
+
+            /* ── 4. Modals — responsive + scrollable ── */
+            .modal {
+                align-items: flex-start !important;
+                padding: 70px 12px 24px !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+
+            .modal-content {
+                width: 100% !important;
+                max-width: 100% !important;
+                max-height: none !important;
+                border-radius: 12px !important;
+            }
+
+            .modal-header { padding: 14px 16px !important; }
+            .modal-header h2 { font-size: 18px !important; }
+            .modal-body { padding: 14px 16px !important; }
+
+            .modal-footer {
+                padding: 12px 16px 16px !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+
+            .modal-footer .btn {
+                flex: 1 !important;
+                min-width: 120px !important;
+                justify-content: center !important;
+            }
+
+            /* Calendar: single column on mobile */
+            .calendar-container {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+
+            .calendar-day { min-height: 36px !important; font-size: 13px !important; }
+
+            .time-slots {
+                grid-template-columns: repeat(2, 1fr) !important;
+                max-height: 200px !important;
+            }
+
+            .duration-select { flex-direction: row !important; gap: 8px !important; }
+
+            /* ── 5. Confirm modal ── */
+            .confirm-modal { padding: 20px 16px !important; }
+
+            .confirm-modal-content {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .confirm-modal-footer {
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+
+            .confirm-modal-btn {
+                flex: 1 !important;
+                min-width: 100px !important;
+                text-align: center !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -838,64 +1084,79 @@
                     <button class="tab-btn active" data-tab="upcoming">Upcoming Schedules</button>
                     <button class="tab-btn" data-tab="history">History</button>
                 </div>
-                <div class="action-buttons">
+                <!-- Desktop-only Add Schedule button (hidden on mobile) -->
+                <div class="action-buttons action-buttons-desktop">
                     <button class="btn btn-primary" id="addScheduleBtn">
                         <i class="fas fa-plus"></i>
                         Add Schedule
                     </button>
                 </div>
             </div>
-            
+
             <div class="content-section" id="upcomingSchedules">
-                <div class="search-container">
-                    <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="search-input" placeholder="Search by date or status..." id="scheduleSearch">
+                <!-- Search bar + mobile Add Schedule button on same row -->
+                <div class="search-action-row">
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-input" placeholder="Search by date or status..." id="scheduleSearch">
+                    </div>
+                    <!-- Mobile-only Add Schedule button (hidden on desktop) -->
+                    <div class="action-buttons-mobile">
+                        <button class="btn btn-primary" id="addScheduleBtnMobile">
+                            <i class="fas fa-plus"></i>
+                            Add
+                        </button>
+                    </div>
                 </div>
-                
-                <table class="schedules-table">
-                    <thead>
-                        <tr>
-                            <th>Scheduled Date</th>
-                            <th>Scheduled Time</th>
-                            <th>Duration</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="schedulesTableBody">
-                        <!-- Schedule rows will be populated -->
-                    </tbody>
-                </table>
-                
+
+                <div class="table-scroll-wrapper">
+                    <table class="schedules-table">
+                        <thead>
+                            <tr>
+                                <th>Scheduled Date</th>
+                                <th>Scheduled Time</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedulesTableBody">
+                            <!-- Schedule rows will be populated -->
+                        </tbody>
+                    </table>
+                </div>
+
                 <div class="pagination">
                     <button class="pagination-btn" id="prevSchedulePage" disabled>Previous</button>
                     <span class="pagination-info" id="schedulePageInfo">Page 1 of 1</span>
                     <button class="pagination-btn" id="nextSchedulePage" disabled>Next</button>
                 </div>
             </div>
-            
+
             <div class="content-section" id="historySchedules" style="display: none;">
-                <table class="schedules-table">
-                    <thead>
-                        <tr>
-                            <th>Scheduled Date</th>
-                            <th>Scheduled Time</th>
-                            <th>Duration</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyTableBody">
-                        <tr>
-                            <td colspan="4">
-                                <div class="empty-state">
-                                    <i class="fas fa-history"></i>
-                                    <h3>No History</h3>
-                                    <p>Completed schedules will appear here.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="table-scroll-wrapper">
+                    <table class="schedules-table">
+                        <thead>
+                            <tr>
+                                <th>Scheduled Date</th>
+                                <th>Scheduled Time</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr>
+                                <td colspan="4">
+                                    <div class="empty-state">
+                                        <i class="fas fa-history"></i>
+                                        <h3>No History</h3>
+                                        <p>Completed schedules will appear here.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -1040,6 +1301,31 @@
         </div>
     </div>
 
+    <!-- Reschedule Request Modal -->
+    <div class="modal" id="rescheduleRequestModal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Request Reschedule</h2>
+                <button type="button" class="modal-close" onclick="closeRescheduleRequestModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color:#b8d0e0;font-size:13px;margin-bottom:16px;">Propose a new date and time. The admin will review and approve or deny your request.</p>
+                <div class="form-group">
+                    <label style="color:#e6f0f7;font-size:14px;font-weight:600;display:block;margin-bottom:8px;">New Date</label>
+                    <input type="date" id="reschedReqDate" class="profile-input" style="width:100%;padding:10px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:white;font-size:14px;" min="{{ date('Y-m-d') }}">
+                </div>
+                <div class="form-group" style="margin-top:14px;">
+                    <label style="color:#e6f0f7;font-size:14px;font-weight:600;display:block;margin-bottom:8px;">New Time</label>
+                    <input type="time" id="reschedReqTime" class="profile-input" style="width:100%;padding:10px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:white;font-size:14px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeRescheduleRequestModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitRescheduleRequest()">Submit Request</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // User schedules from Laravel
         const schedules = [
@@ -1051,15 +1337,25 @@
                 time: "{{ \Carbon\Carbon::parse($schedule->time)->format('g:i A') }}",
                 rawTime: "{{ $schedule->time }}",
                 duration: "{{ $schedule->duration }}",
-                status: "{{ $schedule->status }}"
+                status: "{{ $schedule->status }}",
+                proposedDate: @json($schedule->proposed_date ? \Carbon\Carbon::parse($schedule->proposed_date)->format('F d, Y') : null),
+                proposedTime: @json($schedule->proposed_time ? \Carbon\Carbon::parse($schedule->proposed_time)->format('g:i A') : null)
             }{{ !$loop->last ? ',' : '' }}
             @endforeach
         ];
 
+        // Date helper — returns true if rawDate (YYYY-MM-DD) is strictly before today
+        const _today = new Date(); _today.setHours(0,0,0,0);
+        function isPast(rawDate) {
+            const d = new Date(rawDate); d.setHours(0,0,0,0);
+            return d < _today;
+        }
+
         // Pagination variables
         let scheduleCurrentPage = 1;
         const scheduleRowsPerPage = 5;
-        let filteredSchedules = schedules.filter(s => s.status !== 'completed');
+        // Upcoming = not completed, not denied, not cancelled, and date is today or future
+        let filteredSchedules = schedules.filter(s => s.status.toLowerCase() !== 'completed' && s.status.toLowerCase() !== 'denied' && s.status.toLowerCase() !== 'cancelled' && !isPast(s.rawDate));
 
         // DOM elements
         const scheduleSearchInput = document.getElementById('scheduleSearch');
@@ -1091,15 +1387,51 @@
             } else {
                 paginatedSchedules.forEach(schedule => {
                     const row = document.createElement('tr');
+                    const st = schedule.status.toLowerCase();
+
+                    let statusBadgeClass = 'status-upcoming';
+                    if (st === 'pending') statusBadgeClass = 'status-pending';
+                    else if (st === 'denied') statusBadgeClass = 'status-denied';
+                    else if (st === 'cancelled') statusBadgeClass = 'status-cancelled';
+                    else if (st === 'reschedule in process') statusBadgeClass = 'status-reschedule';
+                    else if (st === 'student reschedule request') statusBadgeClass = 'status-reschedule';
+
+                    let extraInfo = '';
+                    if (st === 'reschedule in process' && schedule.proposedDate) {
+                        extraInfo = `<div style="font-size:12px;color:#9b59b6;margin-top:4px;"><i class="fas fa-calendar-check" style="margin-right:4px;"></i>Proposed: ${schedule.proposedDate} at ${schedule.proposedTime}</div>`;
+                    }
+                    if (st === 'student reschedule request' && schedule.proposedDate) {
+                        extraInfo = `<div style="font-size:12px;color:#f39c12;margin-top:4px;"><i class="fas fa-hourglass-half" style="margin-right:4px;"></i>Requested: ${schedule.proposedDate} at ${schedule.proposedTime}</div>`;
+                    }
+
+                    let actionButtons = '';
+                    if (st === 'pending') {
+                        actionButtons = `
+                            <span style="font-size:12px;color:#f1c40f;margin-right:6px;">Awaiting approval</span>
+                            <button class="action-btn cancel-btn" onclick="cancelSchedule(${schedule.id})">Cancel</button>
+                        `;
+                    } else if (st === 'upcoming') {
+                        actionButtons = `
+                            <button class="action-btn edit-btn" onclick="editSchedule(${schedule.id})">Edit</button>
+                            <button class="action-btn cancel-btn" onclick="cancelSchedule(${schedule.id})">Cancel</button>
+                        `;
+                    } else if (st === 'reschedule in process') {
+                        actionButtons = `
+                            <button class="action-btn" style="background:rgba(46,204,113,0.2);color:#2ecc71;" onclick="acceptReschedule(${schedule.id})">Accept</button>
+                            <button class="action-btn" style="background:rgba(231,76,60,0.2);color:#e74c3c;" onclick="cancelReschedule(${schedule.id})">Decline</button>
+                        `;
+                    } else if (st === 'student reschedule request') {
+                        actionButtons = `<span style="font-size:12px;color:#f39c12;">Awaiting admin approval</span>`;
+                    }
+
                     row.innerHTML = `
-                        <td>${schedule.date}</td>
+                        <td>${schedule.date}${extraInfo}</td>
                         <td>${schedule.time}</td>
                         <td>${schedule.duration == 60 ? '1 hour' : '1.5 hours'}</td>
-                        <td><span class="status-badge status-upcoming">${schedule.status}</span></td>
+                        <td><span class="status-badge ${statusBadgeClass}">${schedule.status}</span></td>
                         <td>
                             <div class="action-buttons-cell">
-                                <button class="action-btn edit-btn" onclick="editSchedule(${schedule.id})">Edit</button>
-                                <button class="action-btn cancel-btn" onclick="cancelSchedule(${schedule.id})">Cancel</button>
+                                ${actionButtons}
                             </div>
                         </td>
                     `;
@@ -1121,9 +1453,9 @@
             const searchTerm = scheduleSearchInput.value.toLowerCase();
             const activeTab = document.querySelector('.tab-btn.active').getAttribute('data-tab');
             
-            let baseSchedules = activeTab === 'upcoming' 
-                ? schedules.filter(s => s.status !== 'completed')
-                : schedules.filter(s => s.status === 'completed');
+            let baseSchedules = activeTab === 'upcoming'
+                ? schedules.filter(s => s.status.toLowerCase() !== 'completed' && s.status.toLowerCase() !== 'denied' && s.status.toLowerCase() !== 'cancelled' && !isPast(s.rawDate))
+                : schedules.filter(s => s.status.toLowerCase() === 'completed' || s.status.toLowerCase() === 'denied' || s.status.toLowerCase() === 'cancelled' || isPast(s.rawDate));
             
             if (searchTerm === '') {
                 filteredSchedules = baseSchedules;
@@ -1166,7 +1498,7 @@
                 if (tab === 'upcoming') {
                     document.getElementById('upcomingSchedules').style.display = 'block';
                     document.getElementById('historySchedules').style.display = 'none';
-                    filteredSchedules = schedules.filter(s => s.status !== 'completed');
+                    filteredSchedules = schedules.filter(s => s.status.toLowerCase() !== 'completed' && s.status.toLowerCase() !== 'denied' && s.status.toLowerCase() !== 'cancelled' && !isPast(s.rawDate));
                 } else {
                     document.getElementById('upcomingSchedules').style.display = 'none';
                     document.getElementById('historySchedules').style.display = 'block';
@@ -1180,7 +1512,12 @@
 
         function loadHistory() {
             const historyBody = document.getElementById('historyTableBody');
-            const completedSchedules = schedules.filter(s => s.status.toLowerCase() === 'completed');
+            const completedSchedules = schedules.filter(s => 
+                s.status.toLowerCase() === 'completed' || 
+                s.status.toLowerCase() === 'denied' ||
+                s.status.toLowerCase() === 'cancelled' ||
+                isPast(s.rawDate)
+            );
             
             if (completedSchedules.length === 0) {
                 historyBody.innerHTML = `
@@ -1189,7 +1526,7 @@
                             <div class="empty-state">
                                 <i class="fas fa-history"></i>
                                 <h3>No History</h3>
-                                <p>Completed schedules will appear here.</p>
+                                <p>Completed, denied, or cancelled schedules will appear here.</p>
                             </div>
                         </td>
                     </tr>
@@ -1198,11 +1535,18 @@
                 historyBody.innerHTML = '';
                 completedSchedules.forEach(schedule => {
                     const row = document.createElement('tr');
+                    const st = schedule.status.toLowerCase();
+                    let badgeClass = 'status-completed';
+                    let badgeStyle = 'background:rgba(52,152,219,0.2);color:#3498db;';
+                    let label = schedule.status;
+                    if (st === 'denied') { badgeClass = 'status-denied'; badgeStyle = 'background:rgba(231,76,60,0.2);color:#e74c3c;'; }
+                    else if (st === 'cancelled') { badgeClass = 'status-cancelled'; badgeStyle = 'background:rgba(127,140,141,0.25);color:#95a5a6;'; }
+                    else if (isPast(schedule.rawDate) && st !== 'completed' && st !== 'denied' && st !== 'cancelled') { label = 'Past'; }
                     row.innerHTML = `
                         <td>${schedule.date}</td>
                         <td>${schedule.time}</td>
                         <td>${schedule.duration == 60 ? '1 hour' : '1.5 hours'}</td>
-                        <td><span class="status-badge status-completed" style="background:rgba(52,152,219,0.2);color:#3498db;">${schedule.status}</span></td>
+                        <td><span class="status-badge ${badgeClass}" style="${badgeStyle}">${label}</span></td>
                     `;
                     historyBody.appendChild(row);
                 });
@@ -1210,26 +1554,149 @@
         }
 
         async function cancelSchedule(id) {
-            const confirmed = await showConfirmModal('Cancel Appointment', 'Are you sure you want to cancel this appointment?', 'Cancel', true);
+            const confirmed = await showConfirmModal('Cancel Appointment', 'Are you sure you want to cancel this appointment? This cannot be undone.', 'Cancel Appointment', true);
             if (confirmed) {
-                fetch(`/user/schedules/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
+                try {
+                    const resp = await fetch(`/user/schedules/${id}/cancel`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json'
+                        }
+                    });
+                    const data = await resp.json();
                     if (data.success) {
-                        window.location.reload();
+                        const idx = schedules.findIndex(s => s.id === id);
+                        if (idx !== -1) schedules[idx].status = 'Cancelled';
+                        filterSchedules();
+                        showToast('Appointment cancelled. Admin has been notified.', 'success');
+                    } else {
+                        showToast(data.error || 'Failed to cancel.', 'error');
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Failed to cancel appointment');
-                });
+                } catch(e) {
+                    showToast('Error cancelling appointment.', 'error');
+                }
             }
         }
+
+        // Accept admin-proposed reschedule
+        async function acceptReschedule(id) {
+            const confirmed = await showConfirmModal('Accept Reschedule', 'Accept the admin\'s proposed new schedule?', 'Accept');
+            if (!confirmed) return;
+            try {
+                const resp = await fetch(`/user/schedules/${id}/accept-reschedule`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    showToast('Reschedule accepted! Your appointment has been confirmed.', 'success');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showToast(data.error || 'Failed to accept reschedule.', 'error');
+                }
+            } catch(e) { showToast('Error accepting reschedule.', 'error'); }
+        }
+
+        // Cancel admin-proposed reschedule
+        async function cancelReschedule(id) {
+            const confirmed = await showConfirmModal('Decline Reschedule', 'Decline the admin\'s proposed reschedule? Your original appointment will remain active.', 'Decline', true);
+            if (!confirmed) return;
+            try {
+                const resp = await fetch(`/user/schedules/${id}/cancel-reschedule`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    const idx = schedules.findIndex(s => s.id === id);
+                    if (idx !== -1) { schedules[idx].status = 'Upcoming'; schedules[idx].proposedDate = null; schedules[idx].proposedTime = null; }
+                    filterSchedules();
+                    showToast('Reschedule declined. Your original appointment remains active.', 'success');
+                } else {
+                    showToast(data.error || 'Failed to decline reschedule.', 'error');
+                }
+            } catch(e) { showToast('Error declining reschedule.', 'error'); }
+        }
+
+        // Request Reschedule
+        let _reschedReqId = null;
+        function openRescheduleRequestModal(id) {
+            _reschedReqId = id;
+            document.getElementById('reschedReqDate').value = '';
+            document.getElementById('reschedReqTime').value = '';
+            document.getElementById('rescheduleRequestModal').style.display = 'flex';
+        }
+        function closeRescheduleRequestModal() {
+            document.getElementById('rescheduleRequestModal').style.display = 'none';
+            _reschedReqId = null;
+        }
+        async function submitRescheduleRequest() {
+            const date = document.getElementById('reschedReqDate').value;
+            const time = document.getElementById('reschedReqTime').value;
+            if (!date || !time) { showToast('Please select both date and time.', 'error'); return; }
+            const scheduleId = _reschedReqId;
+            try {
+                const resp = await fetch(`/user/schedules/${scheduleId}/request-reschedule`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ date, time })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    closeRescheduleRequestModal();
+                    const idx = schedules.findIndex(s => s.id === scheduleId);
+                    if (idx !== -1) {
+                        schedules[idx].status = 'Student Reschedule Request';
+                    }
+                    filterSchedules();
+                    showToast('Reschedule request submitted! Awaiting admin approval.', 'success');
+                } else {
+                    showToast(data.error || data.message || 'Failed to submit request.', 'error');
+                }
+            } catch(e) { showToast('Error submitting reschedule request.', 'error'); }
+        }
+
+        // Simple toast function for user-scheduling
+        function showToast(msg, type = 'success') {
+            const el = document.createElement('div');
+            el.style.cssText = 'position:fixed;bottom:20px;right:20px;padding:14px 22px;border-radius:8px;color:white;font-weight:600;z-index:99999;backdrop-filter:blur(10px);transition:opacity 0.5s;';
+            el.style.background = type === 'success' ? 'rgba(46,204,113,0.9)' : 'rgba(231,76,60,0.9)';
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 3000);
+        }
+
+        // Poll for new admin actions (reschedule proposed, accept/deny) every 15 seconds
+        // Only reload if unread count increases from the initial value
+        (function pollAdminActions() {
+            let initialCount = -1;
+            function check() {
+                fetch('/user/notifications/unread-count')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (initialCount === -1) {
+                            initialCount = data.count; // record baseline on page load
+                        } else if (data.count > initialCount) {
+                            // New notification came in — reload to show fresh schedule data
+                            window.location.reload();
+                        }
+                    })
+                    .catch(() => {});
+            }
+            check();
+            setInterval(check, 15000);
+        })();
 
         function editSchedule(id) {
             const schedule = schedules.find(s => s.id === id);
@@ -1310,6 +1777,16 @@
             bookedSlots = []; // Reset booked slots
             generateCalendar();
         });
+
+        // Mobile Add Schedule button
+        const addScheduleBtnMobile = document.getElementById('addScheduleBtnMobile');
+        if (addScheduleBtnMobile) {
+            addScheduleBtnMobile.addEventListener('click', () => {
+                addScheduleModal.style.display = 'flex';
+                bookedSlots = [];
+                generateCalendar();
+            });
+        }
 
         closeModalBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -1593,8 +2070,9 @@
                 
                 // Check if this slot is available based on duration
                 const isAvailable = isTimeSlotAvailable(time, selectedDuration, selectedDate);
+                const isPast = isTimeSlotPast(time, selectedDate);
                 
-                if (!isAvailable) {
+                if (!isAvailable || isPast) {
                     slot.classList.add('disabled');
                 } else {
                     slot.addEventListener('click', () => selectTime(time));
@@ -1604,8 +2082,25 @@
             });
         }
         
+        // Returns true if the time slot is in the past for today's date
+        function isTimeSlotPast(timeStr, dateStr) {
+            const today = new Date();
+            const slotDate = new Date(dateStr);
+            // Only apply for today — future dates never block
+            if (
+                slotDate.getFullYear() !== today.getFullYear() ||
+                slotDate.getMonth()    !== today.getMonth()    ||
+                slotDate.getDate()     !== today.getDate()
+            ) {
+                return false;
+            }
+            const [slotHour, slotMin] = timeStr.split(':').map(Number);
+            const nowMinutes = today.getHours() * 60 + today.getMinutes();
+            const slotMinutes = slotHour * 60 + slotMin;
+            return slotMinutes <= nowMinutes;
+        }
+
         function isTimeSlotAvailable(startTime, duration, date) {
-            // Parse the start time
             const [hours, minutes] = startTime.split(':').map(Number);
             const startMinutes = hours * 60 + minutes;
             const endMinutes = startMinutes + duration;
@@ -1687,8 +2182,9 @@
                 // Check if this slot is available (excluding the current appointment's time)
                 const isCurrentTime = time === editSelectedTime.substring(0, 5);
                 const isAvailable = isCurrentTime || isTimeSlotAvailable(time, editSelectedDuration, editSelectedDate);
+                const isPast = isTimeSlotPast(time, editSelectedDate);
                 
-                if (!isAvailable) {
+                if (!isAvailable || isPast) {
                     slot.classList.add('disabled');
                 } else {
                     slot.addEventListener('click', () => selectEditTime(time));
@@ -1781,5 +2277,6 @@
         }
     </script>
     @include('components.confirm-modal')
+    @include('components.toast-notification')
 </body>
 </html>

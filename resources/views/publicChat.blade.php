@@ -30,7 +30,7 @@
         
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
+            background: linear-gradient(135deg, rgba(26, 60, 94, 0.95), rgba(42, 92, 138, 0.95));
             color: var(--text);
             line-height: 1.5;
             height: 100vh;
@@ -744,9 +744,12 @@
                     <button class="tab-btn active" data-tab="chat">Live Chat</button>
                 </div>
                 <div class="action-buttons">
-                    <button class="btn btn-danger" id="viewReportsBtn">
+                    <button class="btn btn-danger" id="viewReportsBtn" style="position: relative;">
                         <i class="fas fa-flag"></i>
                         View Reports
+                        @if(isset($reportedCount) && $reportedCount > 0)
+                        <span id="reportDot" style="position:absolute;top:6px;right:6px;width:10px;height:10px;background:#e74c3c;border-radius:50%;border:2px solid var(--primary);"></span>
+                        @endif
                     </button>
                 </div>
             </div>
@@ -823,13 +826,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Reported Messages</h2>
-                <button class="close-modal">&times;</button>
+                <button class="close-modal" onclick="document.getElementById('reportedMessagesModal').style.display='none'">&times;</button>
             </div>
             <div class="modal-body">
                 <p>No reported messages at this time.</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="closeReportsModal">Close</button>
             </div>
         </div>
     </div>
@@ -838,15 +838,35 @@
     <div class="modal" id="toxicContentModal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 style="color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> Message Blocked</h2>
+                <h2 style="color: #e74c3c;"><i class="fas fa-exclamation-triangle"></i> Message Blocked</h2>
                 <button class="close-modal" onclick="closeToxicModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <p id="toxicContentMessage" style="color: #333; font-size: 16px;">Your message contains toxic words and cannot be sent.</p>
-                <p style="color: #666; font-size: 14px; margin-top: 10px;">Please revise your message to maintain a respectful environment.</p>
+                <p id="toxicContentMessage" style="color: var(--text); font-size: 16px;">Your message contains toxic words and cannot be sent.</p>
+                <p style="color: var(--text-muted); font-size: 14px; margin-top: 10px;">Please revise your message to maintain a respectful environment.</p>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="display: flex; justify-content: center; padding-bottom: 24px;">
                 <button class="btn btn-primary" onclick="closeToxicModal()">I Understand</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Message Modal -->
+    <div class="modal" id="editMessageModal" style="display:none;">
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h2>Edit Message</h2>
+                <button class="close-modal" onclick="document.getElementById('editMessageModal').style.display='none'">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px 20px 8px;">
+                <div style="margin-bottom:15px;">
+                    <label style="color:var(--text-muted);font-size:14px;margin-bottom:8px;display:block;">Message</label>
+                    <textarea id="editMessageText" class="message-input" style="width:100%;min-height:80px;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:var(--text);font-size:14px;resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex;flex-direction:row;flex-wrap:nowrap;justify-content:flex-end;gap:12px;align-items:center;padding:16px 24px 20px;">
+                <button class="btn btn-secondary" style="white-space:nowrap;" onclick="document.getElementById('editMessageModal').style.display='none'">Cancel</button>
+                <button class="btn btn-primary" style="white-space:nowrap;" id="confirmEditBtn">Update</button>
             </div>
         </div>
     </div>
@@ -874,7 +894,7 @@
         const chatMessages = document.getElementById('chatMessages');
         const viewReportsBtn = document.getElementById('viewReportsBtn');
         const reportedMessagesModal = document.getElementById('reportedMessagesModal');
-        const closeReportsModal = document.getElementById('closeReportsModal');
+        const closeReportsModal = null; // removed close button
         const contextMenu = document.getElementById('contextMenu');
         const editOption = document.getElementById('editOption');
         const deleteOption = document.getElementById('deleteOption');
@@ -1017,8 +1037,57 @@
         // Function to close toxic content modal
         function closeToxicModal() {
             toxicContentModal.style.display = 'none';
+            const toxicWordModal = document.getElementById('toxicWordModal');
+            if (toxicWordModal) toxicWordModal.style.display = 'none';
         }
         
+        // Success banner notification (same as counseling/scheduling pages)
+        function showSuccessBanner(msg) {
+            let banner = document.getElementById('chatSuccessAlert');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'chatSuccessAlert';
+                banner.style.cssText = 'background:rgba(46,204,113,0.2);color:#2ecc71;padding:15px;border-radius:8px;margin-bottom:15px;transition:opacity 0.5s ease-out;';
+                const content = document.querySelector('.chat-content');
+                content.insertBefore(banner, content.firstChild);
+            }
+            banner.style.opacity = '1';
+            banner.style.display = 'block';
+            banner.textContent = msg;
+            setTimeout(() => {
+                banner.style.opacity = '0';
+                setTimeout(() => { banner.style.display = 'none'; }, 500);
+            }, 3000);
+        }
+
+        // Update report red dot
+        async function updateReportDot() {
+            try {
+                const response = await fetch('/public-chat/reported/list');
+                const reportedChats = await response.json();
+                let dot = document.getElementById('reportDot');
+                if (reportedChats.length > 0) {
+                    if (!dot) {
+                        dot = document.createElement('span');
+                        dot.id = 'reportDot';
+                        dot.style.cssText = 'position:absolute;top:6px;right:6px;width:10px;height:10px;background:#e74c3c;border-radius:50%;border:2px solid var(--primary);';
+                        viewReportsBtn.appendChild(dot);
+                    }
+                } else {
+                    if (dot) dot.remove();
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        // Show persisted success banner on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const pendingMsg = sessionStorage.getItem('chatSuccess');
+            if (pendingMsg) {
+                sessionStorage.removeItem('chatSuccess');
+                showSuccessBanner(pendingMsg);
+            }
+        });
+
         let selectedMessageId = null;
         let selectedMessageElement = null;
         const currentUserId = '{{ $currentUserId }}';
@@ -1122,10 +1191,23 @@
                 const messageContent = selectedMessageElement.querySelector('.message-content');
                 const currentText = messageContent.textContent.trim();
                 
-                const newText = prompt('Edit your message:', currentText);
-                if (newText !== null && newText.trim() !== '' && newText !== currentText) {
-                    updateMessage(selectedMessageId, newText.trim());
-                }
+                // Open edit modal instead of prompt
+                document.getElementById('editMessageText').value = currentText;
+                document.getElementById('editMessageModal').style.display = 'flex';
+                
+                // Set up confirm button
+                document.getElementById('confirmEditBtn').onclick = async function() {
+                    const newText = document.getElementById('editMessageText').value.trim();
+                    if (newText === '' || newText === currentText) {
+                        document.getElementById('editMessageModal').style.display = 'none';
+                        return;
+                    }
+                    const confirmed = await showConfirmModal('Edit Message', 'Are you sure you want to edit this message?', 'Update');
+                    if (confirmed) {
+                        document.getElementById('editMessageModal').style.display = 'none';
+                        updateMessage(selectedMessageId, newText);
+                    }
+                };
             }
         });
         
@@ -1148,18 +1230,19 @@
                 });
                 
                 if (response.ok) {
+                    sessionStorage.setItem('chatSuccess', 'Message updated successfully!');
                     window.location.reload();
                 } else {
                     const data = await response.json();
                     if (data.error === 'toxic_content') {
                         showToxicModal(data.message);
                     } else {
-                        alert('Failed to update message.');
+                        showSuccessBanner('Failed to update message.');
                     }
                 }
             } catch (error) {
                 console.error('Error updating message:', error);
-                alert('Failed to update message.');
+                showSuccessBanner('Failed to update message.');
             }
         }
         
@@ -1230,30 +1313,6 @@
             }
         }
         
-        async function deleteReportedMessage(messageId) {
-            const confirmed = await showConfirmModal('Delete Message', 'Are you sure you want to delete this message?', 'Delete', true);
-            if (confirmed) {
-                try {
-                    const response = await fetch(`/public-chat/${messageId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        // Refresh the reported messages list
-                        viewReportsBtn.click();
-                    } else {
-                        alert('Failed to delete message');
-                    }
-                } catch (error) {
-                    console.error('Error dismissing report:', error);
-                    alert('Failed to dismiss report');
-                }
-            }
-        }
-        
         // Context menu
         document.addEventListener('contextmenu', function(e) {
             const messageElement = e.target.closest('.message');
@@ -1302,120 +1361,17 @@
                     });
                     
                     if (response.ok) {
+                        sessionStorage.setItem('chatSuccess', 'Message deleted successfully!');
                         window.location.reload();
                     } else {
                         const errorText = await response.text();
-                        alert('Failed to delete message. Status: ' + response.status);
+                        showSuccessBanner('Failed to delete message.');
                     }
                 } catch (error) {
-                    alert('Failed to delete message: ' + error.message);
+                    showSuccessBanner('Failed to delete message.');
                 }
             }
         });
-        
-        editOption.addEventListener('click', function(e) {
-            e.stopPropagation();
-            console.log('Edit clicked!');
-            contextMenu.style.display = 'none';
-            
-            if (selectedMessageElement) {
-                const messageContent = selectedMessageElement.querySelector('.message-content');
-                const currentText = messageContent.textContent.trim();
-                
-                const newText = prompt('Edit your message:', currentText);
-                if (newText !== null && newText.trim() !== '' && newText !== currentText) {
-                    updateMessage(selectedMessageId, newText.trim());
-                }
-            }
-        });
-        
-        async function updateMessage(messageId, newMessage) {
-            // Client-side validation for toxic content
-            const validation = containsToxicContent(newMessage);
-            if (validation.isToxic) {
-                showToxicModal(validation.message);
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/public-chat/${messageId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify({ message: newMessage })
-                });
-                
-                if (response.ok) {
-                    window.location.reload();
-                } else {
-                    const data = await response.json();
-                    if (data.error === 'toxic_content') {
-                        showToxicModal(data.message);
-                    } else {
-                        alert('Failed to update message.');
-                    }
-                }
-            } catch (error) {
-                console.error('Error updating message:', error);
-                alert('Failed to update message.');
-            }
-        }
-        
-        // Scroll to bottom on load
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        // Functions
-        async function sendMessage() {
-            const content = messageInput.value.trim();
-            if (content === '') return;
-            
-            console.log('Sending message:', content);
-            
-            try {
-                const csrfToken = document.querySelector('meta[name="csrf-token"]');
-                if (!csrfToken) {
-                    console.error('CSRF token not found');
-                    alert('CSRF token not found. Please refresh the page.');
-                    return;
-                }
-                
-                console.log('Making fetch request to:', '{{ route("chat.store") }}');
-                
-                const response = await fetch('{{ route("chat.store") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken.content
-                    },
-                    body: JSON.stringify({ message: content })
-                });
-                
-                console.log('Response status:', response.status);
-                
-                if (response.ok) {
-                    console.log('Message sent successfully, reloading...');
-                    // Reload page to show new message
-                    window.location.reload();
-                } else {
-                    try {
-                        const errorData = await response.json();
-                        if (errorData.error === 'toxic_content') {
-                            showToxicWordModal();
-                            messageInput.focus();
-                            return;
-                        }
-                        alert('Failed to send message: ' + (errorData.message || 'Unknown error'));
-                    } catch (jsonError) {
-                        alert('Failed to send message. Server error: ' + response.status);
-                    }
-                }
-            } catch (error) {
-                console.error('Error sending message:', error);
-                alert('Failed to send message.');
-            }
-        }
         
         // Functions for reported messages
         async function unreportMessage(messageId) {
@@ -1429,12 +1385,13 @@
                 
                 if (response.ok) {
                     viewReportsBtn.click();
+                    updateReportDot();
                 } else {
-                    alert('Failed to dismiss report');
+                    showSuccessBanner('Failed to dismiss report');
                 }
             } catch (error) {
                 console.error('Error dismissing report:', error);
-                alert('Failed to dismiss report');
+                showSuccessBanner('Failed to dismiss report');
             }
         }
         
@@ -1451,12 +1408,14 @@
                     
                     if (response.ok) {
                         viewReportsBtn.click();
+                        updateReportDot();
+                        showSuccessBanner('Reported message deleted successfully!');
                     } else {
-                        alert('Failed to delete message');
+                        showSuccessBanner('Failed to delete message');
                     }
                 } catch (error) {
                     console.error('Error deleting message:', error);
-                    alert('Failed to delete message');
+                    showSuccessBanner('Failed to delete message');
                 }
             }
         }
@@ -1465,10 +1424,7 @@
         function showToxicWordModal() {
             document.getElementById('toxicWordModal').style.display = 'flex';
         }
-        
-        function closeToxicModal() {
-            document.getElementById('toxicWordModal').style.display = 'none';
-        }
+        // closeToxicModal is already defined above and handles both modals
     </script>
     
     @include('components.confirm-modal')

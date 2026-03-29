@@ -36,7 +36,8 @@ class ChatController extends Controller
         
         // Return different views based on user type
         if ($isAdmin) {
-            return view('publicChat', compact('chats', 'currentUserId', 'isAdmin', 'userType'));
+            $reportedCount = Chat::where('reported', true)->count();
+            return view('publicChat', compact('chats', 'currentUserId', 'isAdmin', 'userType', 'reportedCount'));
         } else {
             return view('user.user-public-chat', compact('chats', 'currentUserId', 'isAdmin', 'userType'));
         }
@@ -92,7 +93,7 @@ class ChatController extends Controller
         $isAdmin = session('admin_logged_in', false);
         
         // Admin can delete any message, users can only delete their own
-        if ($isAdmin || $chat->user_id === $currentUserId) {
+        if ($isAdmin || (string)$chat->user_id === (string)$currentUserId) {
             $chat->delete();
             return response()->json(['success' => true]);
         }
@@ -117,10 +118,11 @@ class ChatController extends Controller
         }
         
         $chat = Chat::findOrFail($id);
-        $currentUserId = session('user_id', session('school_id', request()->ip()));
+        $isAdmin = session('admin_logged_in', false);
+        $currentUserId = $isAdmin ? 'admin_' . session('admin_id', '0') : session('user_id', session('school_id', request()->ip()));
         
-        // Only allow user to update their own messages
-        if ($chat->user_id === $currentUserId) {
+        // Allow admin to update any message, users can only update their own
+        if ($isAdmin || (string)$chat->user_id === (string)$currentUserId) {
             $chat->message = $request->message;
             $chat->save();
             return response()->json(['success' => true]);

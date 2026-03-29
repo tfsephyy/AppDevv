@@ -26,7 +26,7 @@
         
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
+            background: linear-gradient(135deg, rgba(26, 60, 94, 0.95), rgba(42, 92, 138, 0.95));
             color: var(--text);
             line-height: 1.5;
             height: 100vh;
@@ -724,6 +724,11 @@
             color: var(--text);
             padding: 10px;
         }
+
+        select.form-control {
+            background: #1a3c5e;
+            cursor: pointer;
+        }
         
         .form-control:focus {
             outline: none;
@@ -862,7 +867,7 @@
                 <!-- Search Input -->
                 <div class="search-container">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="search-input" placeholder="Search by student name, diagnosis, or status..." id="sessionSearch">
+                    <input type="text" class="search-input" placeholder="Search by student name, concern, or status..." id="sessionSearch">
                 </div>
                 
                 <table class="students-table">
@@ -870,7 +875,7 @@
                         <tr>
                             <th>Student</th>
                             <th>Status</th>
-                            <th>Diagnosis</th>
+                            <th>Concern</th>
                             <th>Last Session</th>
                             <th>Actions</th>
                         </tr>
@@ -894,7 +899,7 @@
                         <tr>
                             <th>Student</th>
                             <th>Status</th>
-                            <th>Diagnosis</th>
+                            <th>Concern</th>
                             <th>Last Session</th>
                             <th>Actions</th>
                         </tr>
@@ -943,8 +948,8 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="diagnosis">Diagnosis</label>
-                        <input type="text" name="diagnosis" id="diagnosis" class="form-control" required>
+                        <label for="concern">Concern</label>
+                        <input type="text" name="concern" id="concern" class="form-control" required>
                     </div>
                     
                     <div class="form-group">
@@ -996,7 +1001,6 @@
                 <!-- Content loaded via JavaScript -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary close-modal" onclick="closeModals()">Close</button>
             </div>
         </div>
     </div>
@@ -1022,8 +1026,8 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="editDiagnosis">Diagnosis</label>
-                        <input type="text" name="diagnosis" id="editDiagnosis" class="form-control" required>
+                        <label for="editConcern">Concern</label>
+                        <input type="text" name="concern" id="editConcern" class="form-control" required>
                     </div>
                     
                     <div class="form-group">
@@ -1056,7 +1060,7 @@
                     <thead>
                         <tr>
                             <th>Session Date</th>
-                            <th>Diagnosis</th>
+                            <th>Concern</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -1089,8 +1093,8 @@
                     <input type="text" class="form-control" id="detailSessionDate" readonly>
                 </div>
                 <div class="form-group">
-                    <label>Diagnosis</label>
-                    <textarea class="form-control" id="detailDiagnosis"></textarea>
+                    <label>Concern</label>
+                    <textarea class="form-control" id="detailConcern"></textarea>
                 </div>
                 <div class="form-group">
                     <label>Status</label>
@@ -1106,7 +1110,6 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeSessionDetailsModal()">Close</button>
                 <button type="button" class="btn btn-primary" onclick="updateSessionDetails()">Update</button>
             </div>
         </div>
@@ -1123,7 +1126,7 @@
                 schoolId: "{{ $session->userAccount->schoolId }}",
                 program: "{{ $session->userAccount->program }}",
                 status: "{{ $session->status }}",
-                diagnosis: "{{ $session->diagnosis }}",
+                concern: "{{ $session->concern }}",
                 lastSession: "{{ \Carbon\Carbon::parse($session->last_session)->format('M d, Y') }}"
             }{{ !$loop->last ? ',' : '' }}
             @endforeach
@@ -1204,7 +1207,7 @@
                             </div>
                         </td>
                         <td><span class="status-badge status-${session.status}">${session.status}</span></td>
-                        <td>${session.diagnosis}</td>
+                        <td>${session.concern}</td>
                         <td>${session.lastSession}</td>
                         <td>
                             <div class="action-buttons-cell">
@@ -1253,7 +1256,7 @@
             } else {
                 filteredSessions = sessions.filter(session => 
                     session.name.toLowerCase().includes(searchTerm) ||
-                    session.diagnosis.toLowerCase().includes(searchTerm) ||
+                    session.concern.toLowerCase().includes(searchTerm) ||
                     session.status.toLowerCase().includes(searchTerm)
                 );
             }
@@ -1293,14 +1296,8 @@
             }, 3000);
         }
 
-        // Logout confirmation
-        document.querySelector('.logout-btn').addEventListener('click', async function(event) {
-          event.preventDefault();
-          const confirmed = await showConfirmModal('Logout', 'Are you sure you want to logout?', 'Logout');
-          if (confirmed) {
-              document.getElementById('logoutForm').submit();
-          }
-        });
+        // Logout confirmation is handled by navigation.blade.php
+        
         
         // Show student history modal
         async function showStudentHistory(userId, studentName) {
@@ -1328,7 +1325,7 @@
                         });
                         row.innerHTML = `
                             <td>${sessionDate}</td>
-                            <td>${session.diagnosis || 'N/A'}</td>
+                            <td>${session.concern || 'N/A'}</td>
                             <td><span class="status-badge status-${session.status}">${session.status}</span></td>
                             <td style="display:flex; gap:8px;">
                                 <button class="action-btn view-btn" onclick="viewSessionDetails(${session.id})">
@@ -1361,10 +1358,10 @@
                     day: 'numeric' 
                 });
                 document.getElementById('detailSessionDate').value = sessionDate;
-                document.getElementById('detailDiagnosis').value = session.diagnosis || '';
+                document.getElementById('detailConcern').value = session.concern || '';
                 document.getElementById('detailStatus').value = session.status;
                 document.getElementById('detailNotes').value = session.note || '';
-                document.getElementById('detailDiagnosis').setAttribute('readonly', true);
+                document.getElementById('detailConcern').setAttribute('readonly', true);
                 document.getElementById('detailStatus').setAttribute('disabled', true);
                 document.getElementById('detailNotes').setAttribute('readonly', true);
                 document.getElementById('sessionDetailsModal').dataset.sessionId = sessionId;
@@ -1379,7 +1376,7 @@
 
         function openEditSessionModal(sessionId) {
             viewSessionDetails(sessionId).then(() => {
-                document.getElementById('detailDiagnosis').removeAttribute('readonly');
+                document.getElementById('detailConcern').removeAttribute('readonly');
                 document.getElementById('detailStatus').removeAttribute('disabled');
                 document.getElementById('detailNotes').removeAttribute('readonly');
                 document.getElementById('sessionDetailsModal').style.zIndex = '10001';
@@ -1393,7 +1390,7 @@
         async function updateSessionDetails() {
             const sessionId = document.getElementById('sessionDetailsModal').dataset.sessionId;
             const data = {
-                diagnosis: document.getElementById('detailDiagnosis').value,
+                concern: document.getElementById('detailConcern').value,
                 status: document.getElementById('detailStatus').value,
                 note: document.getElementById('detailNotes').value,
                 last_session: document.getElementById('detailSessionDate').value
@@ -1410,12 +1407,12 @@
                 });
                 
                 if (response.ok) {
-                    NotificationSystem.show('Session updated successfully!', 'success');
+                    showToast('Session updated successfully!', 'success');
                     closeSessionDetailsModal();
                     document.getElementById('editSessionModal').style.display = 'none';
                     document.getElementById('historyModal').style.display = 'none';
                 } else {
-                    NotificationSystem.show('Failed to update session', 'error');
+                    showToast('Failed to update session', 'error');
                 }
             } catch (error) {
                 console.error('Error updating session:', error);
@@ -1457,13 +1454,41 @@
             return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
         }
         
+        // Toast notification
+        function showSuccessBanner(msg) {
+            let banner = document.getElementById('successAlert');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'successAlert';
+                banner.style.cssText = 'background:rgba(46,204,113,0.2);color:#2ecc71;padding:15px;border-radius:8px;margin-bottom:20px;transition:opacity 0.5s ease-out;';
+                const content = document.querySelector('.counseling-content');
+                content.insertBefore(banner, content.firstChild);
+            }
+            banner.style.opacity = '1';
+            banner.style.display = 'block';
+            banner.textContent = msg;
+            setTimeout(() => {
+                banner.style.opacity = '0';
+                setTimeout(() => { banner.style.display = 'none'; }, 500);
+            }, 3000);
+        }
+
+        function showToast(msg, type = 'success') {
+            const el = document.createElement('div');
+            el.style.cssText = 'position:fixed;bottom:20px;right:20px;padding:14px 22px;border-radius:8px;color:white;font-weight:600;z-index:99999;backdrop-filter:blur(10px);transition:opacity 0.5s;';
+            el.style.background = type === 'success' ? 'rgba(46,204,113,0.9)' : 'rgba(231,76,60,0.9)';
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 3000);
+        }
+
         // User accounts for autocomplete
         let userAccounts = [];
         const schoolIdInput = document.getElementById('schoolId');
         const autocompleteDropdown = document.getElementById('autocompleteDropdown');
         
         // Fetch user accounts
-        fetch('{{ route("scheduling.users") }}')
+        fetch('/scheduling/user-accounts')
             .then(response => response.json())
             .then(data => {
                 userAccounts = data;
@@ -1547,9 +1572,10 @@
         });
         
         function loadUserSchedules(schoolId) {
-            fetch(`{{ url('/counseling/user-schedules') }}/${schoolId}`)
+            fetch(`/counseling/user-schedules/${schoolId}`)
                 .then(response => response.json())
-                .then(schedules => {
+                .then(allSchedules => {
+                    const schedules = allSchedules.slice(0, 5);
                     const scheduleList = document.getElementById('scheduleList');
                     scheduleList.innerHTML = '';
                     
@@ -1557,6 +1583,11 @@
                         scheduleList.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No recent schedules found</p>';
                         return;
                     }
+
+                    const header = document.createElement('p');
+                    header.style.cssText = 'font-size:12px;color:var(--text-muted);margin-bottom:8px;';
+                    header.textContent = '5 most recent schedules — click to select:';
+                    scheduleList.appendChild(header);
                     
                     schedules.forEach(schedule => {
                         const item = document.createElement('div');
@@ -1578,6 +1609,13 @@
         
         // Initialize close modal buttons after DOM loads
         document.addEventListener('DOMContentLoaded', function() {
+            // Show persisted success banner after page reload (archive/unarchive)
+            const pendingMsg = sessionStorage.getItem('counselingSuccess');
+            if (pendingMsg) {
+                sessionStorage.removeItem('counselingSuccess');
+                showSuccessBanner(pendingMsg);
+            }
+
             console.log('DOM loaded - Initializing modal close buttons');
             const closeButtons = document.querySelectorAll('.close-modal');
             console.log('Found ' + closeButtons.length + ' close buttons');
@@ -1622,7 +1660,7 @@
         
         async function viewSession(id) {
             try {
-                const response = await fetch(`{{ url('/counseling') }}/${id}`);
+                const response = await fetch(`/counseling/${id}`);
                 const session = await response.json();
                 
                 const body = document.getElementById('viewSessionBody');
@@ -1648,8 +1686,8 @@
                                 <div style="font-size: 16px;"><span class="status-badge status-${session.status}">${session.status}</span></div>
                             </div>
                             <div style="margin-bottom: 15px;">
-                                <div style="color: var(--text-muted); font-size: 14px; margin-bottom: 5px;">Diagnosis</div>
-                                <div style="font-size: 16px;">${session.diagnosis}</div>
+                                <div style="color: var(--text-muted); font-size: 14px; margin-bottom: 5px;">Concern</div>
+                                <div style="font-size: 16px;">${session.concern}</div>
                             </div>
                             <div style="margin-bottom: 15px;">
                                 <div style="color: var(--text-muted); font-size: 14px; margin-bottom: 5px;">Last Session</div>
@@ -1674,11 +1712,11 @@
         
         async function editSession(id) {
             try {
-                const response = await fetch(`{{ url('/counseling') }}/${id}`);
+                const response = await fetch(`/counseling/${id}`);
                 const session = await response.json();
                 
                 document.getElementById('editStatus').value = session.status;
-                document.getElementById('editDiagnosis').value = session.diagnosis;
+                document.getElementById('editConcern').value = session.concern;
                 if (session.last_session) {
                   const d = new Date(session.last_session);
                   const yyyy = d.getFullYear();
@@ -1690,7 +1728,7 @@
                 }
                 document.getElementById('editNote').value = session.note || '';
                 
-                document.getElementById('editSessionForm').action = `{{ url('/counseling') }}/${id}`;
+                document.getElementById('editSessionForm').action = `/counseling/${id}`;
                 editSessionModal.style.display = 'flex';
                 editSessionModal.style.zIndex = '10002';
                 document.getElementById('historyModal').style.zIndex = '10001';
@@ -1705,7 +1743,7 @@
             if (!confirmed) return;
 
             try {
-                const response = await fetch(`{{ url('/counseling') }}/${id}/archive`, {
+                const response = await fetch(`/counseling/${id}/archive`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1713,14 +1751,14 @@
                     }
                 });
                 if (response.ok) {
-                    alert('Session archived successfully!');
+                    sessionStorage.setItem('counselingSuccess', 'Session archived successfully!');
                     location.reload();
                 } else {
-                    alert('Failed to archive session.');
+                    showToast('Failed to archive session.', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('An error occurred.');
+                showToast('An error occurred.', 'error');
             }
         }
         
@@ -1729,7 +1767,7 @@
             if (!confirmed) return;
 
             try {
-                const response = await fetch(`{{ url('/counseling') }}/${id}/unarchive`, {
+                const response = await fetch(`/counseling/${id}/unarchive`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1737,14 +1775,14 @@
                     }
                 });
                 if (response.ok) {
-                    alert('Session unarchived successfully! Returning to Active Cases.');
+                    sessionStorage.setItem('counselingSuccess', 'Session unarchived successfully!');
                     location.reload();
                 } else {
-                    alert('Failed to unarchive session.');
+                    showToast('Failed to unarchive session.', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('An error occurred.');
+                showToast('An error occurred.', 'error');
             }
         }
         
@@ -1753,7 +1791,7 @@
             if (!confirmed) return;
 
             try {
-                const response = await fetch(`{{ url('/counseling') }}/${id}`, {
+                const response = await fetch(`/counseling/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1761,20 +1799,20 @@
                     }
                 });
                 if (response.ok) {
-                    alert('Session deleted successfully!');
+                    showSuccessBanner('Session deleted successfully!');
                     loadArchive();
                 } else {
-                    alert('Failed to delete session.');
+                    showToast('Failed to delete session.', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('An error occurred.');
+                showToast('An error occurred.', 'error');
             }
         }
         
         async function loadArchive() {
             try {
-                const response = await fetch('{{ route("counceling.archived") }}');
+                const response = await fetch('/counseling-archive');
                 const sessions = await response.json();
                 
                 const tbody = document.getElementById('archiveTableBody');
@@ -1809,7 +1847,7 @@
                                 </div>
                             </td>
                             <td><span class="status-badge status-${session.status}">${session.status}</span></td>
-                            <td>${session.diagnosis}</td>
+                            <td>${session.concern}</td>
                             <td>${date}</td>
                             <td>
                                 <div class="action-buttons-cell">

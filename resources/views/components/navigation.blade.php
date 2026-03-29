@@ -33,6 +33,11 @@
             <span>Feed</span>
         </a>
 
+        <a href="{{ route('admin.journal') }}" class="nav-item {{ request()->routeIs('admin.journal') ? 'active' : '' }}">
+            <i class="fas fa-book"></i>
+            <span>Journal</span>
+        </a>
+
         <a href="{{ route('motivational') }}" class="nav-item {{ request()->routeIs('motivational') || request()->routeIs('motivational.archive') ? 'active' : '' }}">
             <i class="fas fa-lightbulb"></i>
             <span>Motivational</span>
@@ -48,8 +53,23 @@
             @endif
         </div>
         <div class="admin-info">
-            <h3>{{ session('admin_name', 'Admin') }}</h3>
+            <div style="display:flex;align-items:center;gap:6px;">
+                <h3>{{ session('admin_name', 'Admin') }}</h3>
+                <button class="admin-bell-btn" id="adminBellBtn" onclick="toggleAdminBell(event)" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="admin-bell-badge" id="adminBellBadge">0</span>
+                </button>
+            </div>
             <p>Administrator</p>
+        </div>
+        
+        <!-- Bell Dropdown -->
+        <div class="admin-bell-dropdown" id="adminBellDropdown" style="display:none;">
+            <div class="admin-bell-header">
+                <span>Notifications</span>
+                <button onclick="markAllAdminBellRead()" style="background:none;border:none;color:#7fa8c9;font-size:12px;cursor:pointer;">Mark all read</button>
+            </div>
+            <div id="adminBellList" style="max-height:280px;overflow-y:auto;"><p style="text-align:center;color:#7fa8c9;padding:20px;font-size:12px;">Loading...</p></div>
         </div>
         
         <!-- Profile Dropdown -->
@@ -118,6 +138,44 @@
 </div>
 
 <style>
+/* Admin Bell Notification */
+.admin-bell-btn {
+    background: none; border: none; cursor: pointer;
+    color: #b8d0e0; font-size: 14px; padding: 2px 4px;
+    position: relative; transition: color 0.2s; line-height: 1;
+}
+.admin-bell-btn:hover { color: white; }
+.admin-bell-badge {
+    position: absolute; top: -5px; right: -7px;
+    background: #e74c3c; color: white; border-radius: 50%;
+    width: 15px; height: 15px; font-size: 9px; font-weight: 700;
+    display: none; align-items: center; justify-content: center;
+}
+.admin-bell-dropdown {
+    position: absolute; bottom: 100%; left: 0; width: 280px; z-index: 10000;
+    background: rgba(8, 22, 43, 0.99); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px; box-shadow: 0 -8px 32px rgba(0,0,0,0.6);
+    backdrop-filter: blur(12px); margin-bottom: 10px;
+}
+.admin-bell-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    color: white; font-weight: 600; font-size: 14px;
+}
+.admin-bell-item {
+    padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06);
+    cursor: pointer; transition: background 0.2s;
+}
+.admin-bell-item:hover { background: rgba(255,255,255,0.07); }
+.admin-bell-item.unread { border-left: 3px solid #3b9ddd; }
+.admin-bell-item .abn-title { color: #e8f4fd; font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.admin-bell-item .abn-msg { color: #7fa8c9; font-size: 12px; margin-bottom: 4px; }
+.admin-bell-item .abn-time { color: #4a7fa5; font-size: 11px; }
+#adminBellList { border-radius: 0 0 12px 12px; }
+#adminBellList::-webkit-scrollbar { width: 4px; }
+#adminBellList::-webkit-scrollbar-track { background: transparent; }
+#adminBellList::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
 .profile-dropdown {
     position: absolute;
     bottom: 100%;
@@ -540,5 +598,123 @@ async function logout() {
         }
     }
 }
+
+// Admin Bell Notification
+function toggleAdminBell(e) {
+    e.stopPropagation();
+    const dropdown = document.getElementById('adminBellDropdown');
+    const open = dropdown.style.display !== 'none';
+    dropdown.style.display = open ? 'none' : 'block';
+    if (!open) loadAdminBellNotifs();
+}
+
+document.addEventListener('click', function(e) {
+    const btn = document.getElementById('adminBellBtn');
+    const dropdown = document.getElementById('adminBellDropdown');
+    if (dropdown && btn && !btn.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+    }
+});
+
+function timeAgoAdmin(d) {
+    const s = Math.floor((Date.now() - new Date(d)) / 1000);
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s/60) + 'm ago';
+    if (s < 86400) return Math.floor(s/3600) + 'h ago';
+    return Math.floor(s/86400) + 'd ago';
+}
+
+function loadAdminBellNotifs() {
+    fetch('/admin/notifications')
+        .then(r => r.json())
+        .then(data => {
+            const list = document.getElementById('adminBellList');
+            if (!data.length) {
+                list.innerHTML = '<p style="text-align:center;color:#7fa8c9;padding:20px;font-size:12px;">No new notifications</p>';
+                return;
+            }
+            list.innerHTML = data.map(n => `
+                <div class="admin-bell-item unread" id="abn-${n.id}" onclick="markAdminBellRead(${n.id})">
+                    <div class="abn-title">${n.title}</div>
+                    <div class="abn-msg">${n.message}</div>
+                    <div class="abn-time">${timeAgoAdmin(n.created_at)}</div>
+                </div>
+            `).join('');
+        }).catch(() => {});
+}
+
+function markAdminBellRead(id) {
+    fetch(`/admin/notifications/${id}/read`, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
+    }).then(() => {
+        const el = document.getElementById('abn-' + id);
+        if (el) el.classList.remove('unread');
+        refreshAdminBellBadge();
+    }).catch(() => {});
+}
+
+function markAllAdminBellRead() {
+    fetch('/admin/notifications/read-all', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
+    }).then(() => {
+        document.querySelectorAll('.admin-bell-item.unread').forEach(el => el.classList.remove('unread'));
+        setAdminBellBadge(0);
+        loadAdminBellNotifs();
+    }).catch(() => {});
+}
+
+function setAdminBellBadge(count) {
+    const badge = document.getElementById('adminBellBadge');
+    if (!badge) return;
+    if (count > 0) {
+        badge.style.display = 'flex';
+        badge.textContent = count > 99 ? '99+' : count;
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function refreshAdminBellBadge() {
+    fetch('/admin/notifications/unread-count')
+        .then(r => r.json())
+        .then(data => setAdminBellBadge(data.count))
+        .catch(() => {});
+}
+
+refreshAdminBellBadge();
+setInterval(refreshAdminBellBadge, 10000);
+
+// Welcome Motivational Modal
+@if(session('show_welcome_motivational'))
+    @php session()->forget('show_welcome_motivational'); @endphp
+    (async function() {
+        try {
+            const res = await fetch('/motivational-random');
+            const data = await res.json();
+            if (data.message) {
+                const overlay = document.createElement('div');
+                overlay.id = 'welcomeMotivationalModal';
+                overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;';
+                overlay.innerHTML = `
+                    <div style="background:linear-gradient(135deg,#1a3c5e,#2a5c8a);border-radius:16px;padding:40px;max-width:500px;width:90%;text-align:center;border:1px solid rgba(255,255,255,0.15);box-shadow:0 20px 60px rgba(0,0,0,0.5);backdrop-filter:blur(10px);">
+                        <div style="font-size:48px;margin-bottom:15px;">✨</div>
+                        <h2 style="color:#e6f0f7;font-size:22px;margin-bottom:8px;">Welcome Back!</h2>
+                        <p style="color:#b8d0e0;font-size:13px;margin-bottom:20px;">Here's a motivational message for you today</p>
+                        <div style="background:rgba(255,255,255,0.08);border-radius:12px;padding:25px;margin-bottom:25px;border-left:4px solid #4a90e2;">
+                            <p style="color:#e6f0f7;font-size:16px;line-height:1.7;font-style:italic;">"${data.message}"</p>
+                        </div>
+                        <button onclick="document.getElementById('welcomeMotivationalModal').remove()" style="padding:12px 32px;border-radius:8px;border:none;background:linear-gradient(90deg,#4a90e2,#6bb3ff);color:white;font-weight:600;cursor:pointer;font-size:14px;transition:transform 0.2s;">
+                            <i class="fas fa-heart" style="margin-right:8px;"></i>Thank You!
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+                overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+            }
+        } catch(e) { console.error('Error loading motivational message:', e); }
+    })();
+@endif
 </script>
 @include('components.confirm-modal')

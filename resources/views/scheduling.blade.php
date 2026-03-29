@@ -26,7 +26,7 @@
         
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: linear-gradient(135deg, #6bb3ff 0%, #4a90e2 100%);
+            background: linear-gradient(135deg, rgba(26, 60, 94, 0.95), rgba(42, 92, 138, 0.95));
             color: var(--text);
             line-height: 1.5;
             height: 100vh;
@@ -189,6 +189,27 @@
             display: flex; align-items: center; justify-content: center;
         }
         
+        .admin-notif-dropdown {
+            position: absolute; right: 0; top: 50px; width: 320px; z-index: 9999;
+            background: rgba(26,60,94,0.98); border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            backdrop-filter: blur(12px); overflow: hidden;
+        }
+        .admin-notif-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: white; font-weight: 600; font-size: 14px;
+        }
+        .admin-notif-item {
+            padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.06);
+            cursor: pointer; transition: background 0.2s;
+        }
+        .admin-notif-item:hover { background: rgba(255,255,255,0.07); }
+        .admin-notif-item.unread { border-left: 3px solid #3b9ddd; }
+        .admin-notif-item .notif-title { color: #e8f4fd; font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+        .admin-notif-item .notif-msg { color: #7fa8c9; font-size: 12px; margin-bottom: 4px; }
+        .admin-notif-item .notif-time { color: #4a7fa5; font-size: 11px; }
+        
         .scheduling-content { flex: 1; padding: 30px; overflow-y: auto; }
         
         .content-header {
@@ -258,6 +279,10 @@
         
         .status-upcoming { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
         .status-completed { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+        .status-pending { background: rgba(241, 196, 15, 0.2); color: #f1c40f; }
+        .status-denied { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+        .status-cancelled { background: rgba(127, 140, 141, 0.25); color: #95a5a6; }
+        .status-reschedule { background: rgba(155, 89, 182, 0.2); color: #9b59b6; }
         
         .action-buttons-cell { display: flex; gap: 8px; }
         
@@ -296,6 +321,36 @@
 
         .btn-action.done:hover {
             background: rgba(46, 204, 113, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-action.accept {
+            background: rgba(46, 204, 113, 0.2);
+            color: white;
+        }
+
+        .btn-action.accept:hover {
+            background: rgba(46, 204, 113, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-action.deny {
+            background: rgba(231, 76, 60, 0.2);
+            color: white;
+        }
+
+        .btn-action.deny:hover {
+            background: rgba(231, 76, 60, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-action.resched {
+            background: rgba(241, 196, 15, 0.2);
+            color: white;
+        }
+
+        .btn-action.resched:hover {
+            background: rgba(241, 196, 15, 0.3);
             transform: translateY(-2px);
         }
         
@@ -655,9 +710,6 @@
         }
         #archiveSchedules .action-btn.view-btn {
             color: #fff !important;
-            border-color: #fff !important;
-        }
-            font-weight: 600 !important;
         }
     </style>
 </head>
@@ -672,7 +724,7 @@
             </div>
             
             <div class="admin-actions">
-                <!-- Removed notification and logout buttons -->
+                <!-- Bell notification is now in the sidebar navigation -->
             </div>
         </div>
         
@@ -895,6 +947,82 @@
         </div>
     </div>
 
+    <!-- Reschedule Modal -->
+    <div class="modal" id="rescheduleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Reschedule Appointment</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form method="POST" id="rescheduleForm" action="">
+                @csrf
+                <div class="modal-body">
+                    <div class="calendar-container">
+                        <div class="calendar-section">
+                            <div class="calendar-header">
+                                <h3 id="reschCalendarMonth"></h3>
+                                <div class="calendar-nav">
+                                    <button type="button" class="calendar-nav-btn" id="reschPrevMonth">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <button type="button" class="calendar-nav-btn" id="reschNextMonth">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="calendar-grid" id="reschCalendarGrid"></div>
+
+                            <div class="form-group">
+                                <label>Available Time Slots</label>
+                                <div class="time-slots" id="reschTimeSlots"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="form-group">
+                                <label>Session Duration</label>
+                                <div class="duration-select" id="reschDurationSelect">
+                                    <div class="duration-option selected" data-duration="60">1 hour</div>
+                                    <div class="duration-option" data-duration="90">1.5 hours</div>
+                                </div>
+                            </div>
+
+                            <div class="selected-schedule" id="reschSelectedSchedule" style="display: none;">
+                                <h4>New Schedule</h4>
+                                <div class="schedule-detail">
+                                    <span class="schedule-label">Date:</span>
+                                    <span id="reschSelectedDateDisplay">-</span>
+                                </div>
+                                <div class="schedule-detail">
+                                    <span class="schedule-label">Time:</span>
+                                    <span id="reschSelectedTimeDisplay">-</span>
+                                </div>
+                                <div class="schedule-detail">
+                                    <span class="schedule-label">Duration:</span>
+                                    <span id="reschSelectedDurationDisplay">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="date" id="reschSelectedDate">
+                    <input type="hidden" name="time" id="reschSelectedTime">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeRescheduleModal()">Cancel</button>
+                    <button type="button" class="btn" id="reschDenyBtn" style="background: rgba(231,76,60,0.8); color: white;" onclick="denyFromReschedule()">
+                        <i class="fas fa-times" style="margin-right: 6px;"></i> Deny
+                    </button>
+                    <button type="button" class="btn" id="reschAcceptBtn" style="background: rgba(46,204,113,0.8); color: white;" onclick="acceptFromReschedule()">
+                        <i class="fas fa-check" style="margin-right: 6px;"></i> Accept
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-calendar-alt" style="margin-right: 6px;"></i> Confirm Reschedule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Schedule data from Laravel
         const schedules = [
@@ -907,17 +1035,31 @@
                 time: @json(\Carbon\Carbon::parse($schedule->time)->format('g:i A')),
                 rawTime: @json($schedule->time),
                 duration: @json($schedule->duration),
-                status: @json($schedule->status)
+                status: @json($schedule->status),
+                proposedDate: @json($schedule->proposed_date ? \Carbon\Carbon::parse($schedule->proposed_date)->format('F d, Y') : null),
+                proposedTime: @json($schedule->proposed_time ? \Carbon\Carbon::parse($schedule->proposed_time)->format('g:i A') : null)
             }{{ !$loop->last ? ',' : '' }}
             @endforeach
         ];
 
         console.log('Scheduling page JavaScript loaded. Schedules count:', schedules.length);
 
+        // Format duration from minutes to human-readable
+        function formatDuration(minutes) {
+            const mins = parseInt(minutes);
+            if (mins >= 60) {
+                const hours = Math.floor(mins / 60);
+                const remainMins = mins % 60;
+                return remainMins > 0 ? `${hours}h ${remainMins}m` : `${hours}h`;
+            }
+            return `${mins}m`;
+        }
+
         // Pagination variables
         let scheduleCurrentPage = 1;
         const scheduleRowsPerPage = 5;
-        let filteredSchedules = [...schedules];
+        // Exclude Denied (moves to archive) and Completed from upcoming
+        let filteredSchedules = schedules.filter(s => s.status !== 'Completed' && s.status !== 'Denied');
 
         // DOM elements
         const scheduleSearchInput = document.getElementById('scheduleSearch');
@@ -929,27 +1071,11 @@
         // Function to render schedules table
         function renderScheduleTable() {
             scheduleTableBody.innerHTML = '';
-            const today = new Date();
-            // Move completed schedules to archive
-            let archiveSchedules = [];
-            filteredSchedules.forEach(sch => {
-                const schDate = new Date(sch.rawDate);
-                
-                // Only mark as completed if the date is strictly before today
-                // Don't mark today's schedules as completed even if time has passed
-                if (schDate < today && sch.status !== 'Completed') {
-                    sch.status = 'Completed';
-                }
-                
-                if (sch.status === 'Completed') {
-                    archiveSchedules.push(sch);
-                }
-            });
-            // Only show non-completed in upcoming
-            const upcomingSchedules = filteredSchedules.filter(sch => sch.status !== 'Completed');
+
+            // filteredSchedules already excludes Completed + Denied
             const startIndex = (scheduleCurrentPage - 1) * scheduleRowsPerPage;
             const endIndex = startIndex + scheduleRowsPerPage;
-            const paginatedSchedules = upcomingSchedules.slice(startIndex, endIndex);
+            const paginatedSchedules = filteredSchedules.slice(startIndex, endIndex);
             
             if (paginatedSchedules.length === 0) {
                 scheduleTableBody.innerHTML = `
@@ -962,23 +1088,76 @@
             } else {
                 paginatedSchedules.forEach(schedule => {
                     const row = document.createElement('tr');
+                    row.setAttribute('data-schedule-id', schedule.id);
+
+                    let statusClass = 'status-upcoming';
+                    if (schedule.status === 'Pending') statusClass = 'status-pending';
+                    else if (schedule.status === 'Denied') statusClass = 'status-denied';
+                    else if (schedule.status === 'Reschedule in Process') statusClass = 'status-reschedule';
+                    else if (schedule.status === 'Student Reschedule Request') statusClass = 'status-reschedule';
+                    
+                    let actionButtons = '';
+                    if (schedule.status === 'Pending') {
+                        actionButtons = `
+                            <button class="btn-action view" onclick="viewSchedule(${schedule.id})" title="View">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action accept" onclick="acceptSchedule(${schedule.id})" title="Accept">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn-action resched" onclick="openRescheduleModal(${schedule.id}, '${schedule.rawDate}', '${schedule.rawTime}')" title="Reschedule / Deny">
+                                <i class="fas fa-calendar-alt"></i>
+                            </button>
+                        `;
+                    } else if (schedule.status === 'Upcoming') {
+                        actionButtons = `
+                            <button class="btn-action view" onclick="viewSchedule(${schedule.id})" title="View">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <form method="POST" action="/scheduling/${schedule.id}/complete" style="display:inline;">
+                                @csrf
+                                <button type="submit" class="btn-action done" title="Mark as Done">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            <button class="btn-action resched" onclick="openRescheduleModal(${schedule.id}, '${schedule.rawDate}', '${schedule.rawTime}')" title="Reschedule">
+                                <i class="fas fa-calendar-alt"></i>
+                            </button>
+                        `;
+                    } else if (schedule.status === 'Reschedule in Process') {
+                        actionButtons = `
+                            <button class="btn-action view" onclick="viewSchedule(${schedule.id})" title="View">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <span style="font-size:12px;color:var(--text-muted);padding:4px 8px;">Awaiting student response</span>
+                        `;
+                    } else if (schedule.status === 'Student Reschedule Request') {
+                        const propInfo = schedule.proposedDate ? `→ ${schedule.proposedDate} ${schedule.proposedTime}` : '';
+                        actionButtons = `
+                            <button class="btn-action view" onclick="viewSchedule(${schedule.id})" title="View">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action accept" onclick="acceptStudentReschedule(${schedule.id})" title="Approve Reschedule">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn-action deny" onclick="denyStudentReschedule(${schedule.id})" title="Deny Reschedule">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        `;
+                    }
+
                     row.innerHTML = `
                         <td>${schedule.name}</td>
-                        <td>${schedule.date}</td>
+                        <td>
+                            ${schedule.date}
+                            ${schedule.status === 'Student Reschedule Request' && schedule.proposedDate ? `<div style="font-size:11px;color:#9b59b6;margin-top:3px;"><i class="fas fa-arrow-right"></i> Proposed: ${schedule.proposedDate} ${schedule.proposedTime}</div>` : ''}
+                        </td>
                         <td>${schedule.time}</td>
-                        <td>${schedule.duration}</td>
-                        <td><span class="status-badge status-upcoming">${schedule.status}</span></td>
+                        <td>${formatDuration(schedule.duration)}</td>
+                        <td><span class="status-badge ${statusClass}">${schedule.status}</span></td>
                         <td>
                             <div class="action-buttons-cell">
-                                <button class="btn-action view" onclick="viewSchedule(${schedule.id})" title="View">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <form method="POST" action="/scheduling/${schedule.id}/complete" style="display:inline;">
-                                    @csrf
-                                    <button type="submit" class="btn-action done" title="Mark as Done">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                </form>
+                                ${actionButtons}
                             </div>
                         </td>
                     `;
@@ -999,10 +1178,13 @@
         function filterSchedules() {
             const searchTerm = scheduleSearchInput.value.toLowerCase();
             
+            // Base: exclude Completed, Denied, Cancelled from main view
+            const baseSchedules = schedules.filter(s => s.status !== 'Completed' && s.status !== 'Denied' && s.status !== 'Cancelled');
+            
             if (searchTerm === '') {
-                filteredSchedules = [...schedules];
+                filteredSchedules = baseSchedules;
             } else {
-                filteredSchedules = schedules.filter(schedule => 
+                filteredSchedules = baseSchedules.filter(schedule => 
                     schedule.name.toLowerCase().includes(searchTerm) ||
                     schedule.date.toLowerCase().includes(searchTerm) ||
                     schedule.status.toLowerCase().includes(searchTerm)
@@ -1033,7 +1215,7 @@
         // Archive table rendering
         function renderArchiveTable(searchTerm = '') {
             const archiveTableBody = document.getElementById('archiveTableBody');
-            archiveTableBody.innerHTML = '';
+            archiveTableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">Loading...</td></tr>';
             fetch('/scheduling-archive')
                 .then(response => response.json())
                 .then(archiveSchedules => {
@@ -1045,21 +1227,36 @@
                         );
                     }
                     if (archiveSchedules.length === 0) {
-                        archiveTableBody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fas fa-archive"></i><h3>No Archived Schedules</h3><p>Completed schedules will appear here.</p></div></td></tr>`;
+                        archiveTableBody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fas fa-archive"></i><h3>No Archived Schedules</h3><p>Completed, denied, and cancelled schedules will appear here.</p></div></td></tr>`;
                     } else {
+                        archiveTableBody.innerHTML = '';
                         archiveSchedules.forEach(schedule => {
                             const row = document.createElement('tr');
+                            let statusClass = 'status-completed';
+                            if (schedule.status === 'Denied') statusClass = 'status-denied';
+                            else if (schedule.status === 'Cancelled') statusClass = 'status-cancelled';
+                            let actions = `
+                                <button class="btn-action view" onclick="viewSchedule(${schedule.id})" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            `;
+                            if (schedule.status === 'Denied') {
+                                actions += `
+                                    <button class="btn-action accept" onclick="acceptSchedule(${schedule.id})" title="Accept">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="btn-action resched" onclick="openRescheduleModal(${schedule.id}, '${schedule.rawDate}', '${schedule.rawTime}')" title="Reschedule">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </button>
+                                `;
+                            }
                             row.innerHTML = `
                                 <td>${schedule.user_account.name}</td>
                                 <td>${schedule.date}</td>
                                 <td>${schedule.time}</td>
-                                <td>${schedule.duration}</td>
-                                <td><span class="status-badge status-completed">${schedule.status}</span></td>
-                                <td>
-                                    <button class="btn-action view" onclick="viewSchedule(${schedule.id})" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </td>
+                                <td>${formatDuration(schedule.duration)}</td>
+                                <td><span class="status-badge ${statusClass}">${schedule.status}</span></td>
+                                <td><div class="action-buttons-cell">${actions}</div></td>
                             `;
                             archiveTableBody.appendChild(row);
                         });
@@ -1195,6 +1392,289 @@
         function closeModals() {
             document.getElementById('addScheduleModal').style.display = 'none';
             document.getElementById('viewScheduleModal').style.display = 'none';
+            document.getElementById('rescheduleModal').style.display = 'none';
+        }
+
+        // Reschedule modal functions
+        let reschCurrentDate = new Date();
+        let reschSelectedDate = null;
+        let reschSelectedTime = null;
+        let reschSelectedDuration = 60;
+        let reschBookedSlots = [];
+        let reschScheduleId = null;
+
+        function openRescheduleModal(scheduleId, currentDate, currentTime) {
+            reschScheduleId = scheduleId;
+            document.getElementById('rescheduleForm').action = `/scheduling/${scheduleId}/reschedule`;
+
+            // Reset state
+            reschSelectedDate = currentDate;
+            reschSelectedTime = currentTime;
+            reschCurrentDate = new Date(currentDate + 'T00:00:00');
+
+            // Find the schedule's duration
+            const sched = schedules.find(s => s.id === scheduleId);
+            reschSelectedDuration = sched ? parseInt(sched.duration) : 60;
+
+            // Set duration option
+            document.querySelectorAll('#reschDurationSelect .duration-option').forEach(o => {
+                o.classList.remove('selected');
+                if (parseInt(o.getAttribute('data-duration')) === reschSelectedDuration) {
+                    o.classList.add('selected');
+                }
+            });
+
+            document.getElementById('reschSelectedDate').value = reschSelectedDate;
+            document.getElementById('reschSelectedTime').value = reschSelectedTime;
+
+            document.getElementById('rescheduleModal').style.display = 'flex';
+            generateReschCalendar();
+            fetchReschBookedSlots(reschSelectedDate);
+            updateReschSelectedSchedule();
+        }
+
+        function closeRescheduleModal() {
+            document.getElementById('rescheduleModal').style.display = 'none';
+            reschScheduleId = null;
+        }
+
+        function acceptFromReschedule() {
+            if (!reschScheduleId) return;
+            showConfirmModal('Accept Appointment', 'Are you sure you want to accept this appointment?', 'Accept').then(confirmed => {
+                if (!confirmed) return;
+                fetch(`/scheduling/${reschScheduleId}/accept`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        updateScheduleInList(data.id, 'Upcoming');
+                        closeRescheduleModal();
+                        showToastMsg('Appointment accepted. Student notified.', 'success');
+                    }
+                });
+            });
+        }
+
+        function denyFromReschedule() {
+            if (!reschScheduleId) return;
+            showConfirmModal('Deny Appointment', 'Are you sure you want to deny this appointment? The student will be notified.', 'Deny', true).then(confirmed => {
+                if (!confirmed) return;
+                fetch(`/scheduling/${reschScheduleId}/deny`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        updateScheduleInList(data.id, 'Denied');
+                        closeRescheduleModal();
+                        renderArchiveTable();
+                        showToastMsg('Appointment denied. Student notified.', 'success');
+                    }
+                });
+            });
+        }
+
+        // Duration selection for reschedule
+        document.querySelectorAll('#reschDurationSelect .duration-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('#reschDurationSelect .duration-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                reschSelectedDuration = parseInt(this.getAttribute('data-duration'));
+                updateReschSelectedSchedule();
+                if (reschSelectedDate) {
+                    generateReschTimeSlots();
+                }
+            });
+        });
+
+        // Calendar navigation for reschedule
+        document.getElementById('reschPrevMonth')?.addEventListener('click', () => {
+            reschCurrentDate.setMonth(reschCurrentDate.getMonth() - 1);
+            generateReschCalendar();
+        });
+
+        document.getElementById('reschNextMonth')?.addEventListener('click', () => {
+            reschCurrentDate.setMonth(reschCurrentDate.getMonth() + 1);
+            generateReschCalendar();
+        });
+
+        function generateReschCalendar() {
+            const year = reschCurrentDate.getFullYear();
+            const month = reschCurrentDate.getMonth();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            document.getElementById('reschCalendarMonth').textContent = reschCurrentDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long'
+            });
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+
+            const calendarGrid = document.getElementById('reschCalendarGrid');
+            calendarGrid.innerHTML = '';
+
+            const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            dayHeaders.forEach(day => {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day-header';
+                dayElement.textContent = day;
+                calendarGrid.appendChild(dayElement);
+            });
+
+            for (let i = 0; i < firstDay.getDay(); i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day unavailable';
+                calendarGrid.appendChild(emptyDay);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.textContent = day;
+
+                const date = new Date(year, month, day);
+                date.setHours(0, 0, 0, 0);
+                const dayOfWeek = date.getDay();
+                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+                if (dayOfWeek === 0 || dayOfWeek === 6 || date < today) {
+                    dayElement.className += ' unavailable';
+                } else {
+                    dayElement.className += ' available';
+                    if (reschSelectedDate === dateString) {
+                        dayElement.classList.add('selected');
+                    }
+                    dayElement.addEventListener('click', function() {
+                        document.querySelectorAll('#reschCalendarGrid .calendar-day').forEach(d => d.classList.remove('selected'));
+                        this.classList.add('selected');
+                        reschSelectedDate = dateString;
+                        document.getElementById('reschSelectedDate').value = dateString;
+                        fetchReschBookedSlots(dateString);
+                        updateReschSelectedSchedule();
+                    });
+                }
+                calendarGrid.appendChild(dayElement);
+            }
+        }
+
+        async function fetchReschBookedSlots(date) {
+            try {
+                const response = await fetch(`{{ route('scheduling.booked') }}?date=${date}`);
+                reschBookedSlots = await response.json();
+                generateReschTimeSlots();
+            } catch (error) {
+                console.error('Error fetching booked slots:', error);
+                reschBookedSlots = [];
+                generateReschTimeSlots();
+            }
+        }
+
+        function generateReschTimeSlots() {
+            const timeSlots = document.getElementById('reschTimeSlots');
+
+            if (!reschSelectedDate) {
+                timeSlots.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">Please select a date first</div>';
+                return;
+            }
+
+            timeSlots.innerHTML = '';
+
+            const morningSlots = [];
+            const afternoonSlots = [];
+
+            for (let hour = 8; hour < 12; hour++) {
+                morningSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+                morningSlots.push(`${hour.toString().padStart(2, '0')}:30`);
+            }
+            for (let hour = 13; hour < 17; hour++) {
+                afternoonSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+                afternoonSlots.push(`${hour.toString().padStart(2, '0')}:30`);
+            }
+
+            const allSlots = [...morningSlots, ...afternoonSlots];
+            const now = new Date();
+
+            allSlots.forEach(slot => {
+                const slotElement = document.createElement('div');
+                slotElement.className = 'time-slot';
+                slotElement.textContent = formatTime(slot);
+
+                const slotDateTime = new Date(reschSelectedDate + ' ' + slot);
+                if (slotDateTime < now) {
+                    slotElement.className += ' booked';
+                    slotElement.innerHTML = `${formatTime(slot)} <i class="fas fa-times"></i>`;
+                    timeSlots.appendChild(slotElement);
+                    return;
+                }
+
+                const isAvailable = isReschTimeSlotAvailable(slot, reschSelectedDuration);
+
+                if (!isAvailable) {
+                    slotElement.className += ' booked';
+                    slotElement.innerHTML = `${formatTime(slot)} <i class="fas fa-times"></i>`;
+                } else {
+                    if (reschSelectedTime === slot) {
+                        slotElement.classList.add('selected');
+                    }
+                    slotElement.addEventListener('click', function() {
+                        document.querySelectorAll('#reschTimeSlots .time-slot').forEach(s => s.classList.remove('selected'));
+                        this.classList.add('selected');
+                        reschSelectedTime = slot;
+                        document.getElementById('reschSelectedTime').value = slot;
+                        updateReschSelectedSchedule();
+                    });
+                }
+                timeSlots.appendChild(slotElement);
+            });
+        }
+
+        function isReschTimeSlotAvailable(startTime, duration) {
+            const [hours, minutes] = startTime.split(':').map(Number);
+            const startMinutes = hours * 60 + minutes;
+            const endMinutes = startMinutes + duration;
+
+            if (startMinutes < 12 * 60) {
+                if (endMinutes > 12 * 60) return false;
+            } else {
+                if (endMinutes > 17 * 60) return false;
+            }
+
+            for (let i = 0; i < duration; i += 30) {
+                const checkMinutes = startMinutes + i;
+                const checkHours = Math.floor(checkMinutes / 60);
+                const checkMins = checkMinutes % 60;
+                const checkTime = `${checkHours.toString().padStart(2, '0')}:${checkMins.toString().padStart(2, '0')}`;
+                if (reschBookedSlots.includes(checkTime)) return false;
+            }
+            return true;
+        }
+
+        function updateReschSelectedSchedule() {
+            if (reschSelectedDate && reschSelectedTime && reschSelectedDuration) {
+                document.getElementById('reschSelectedSchedule').style.display = 'block';
+                const dateObj = new Date(reschSelectedDate);
+                document.getElementById('reschSelectedDateDisplay').textContent = dateObj.toLocaleDateString('en-US', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                });
+                document.getElementById('reschSelectedTimeDisplay').textContent = formatTime(reschSelectedTime);
+                document.getElementById('reschSelectedDurationDisplay').textContent = reschSelectedDuration === 90 ? '1.5 hours' : '1 hour';
+            } else {
+                document.getElementById('reschSelectedSchedule').style.display = 'none';
+            }
         }
         
         // Tab switching function
@@ -1242,6 +1722,13 @@
         viewScheduleModal?.addEventListener('click', function(event) {
             if (event.target === viewScheduleModal) {
                 closeModals();
+            }
+        });
+
+        const rescheduleModal = document.getElementById('rescheduleModal');
+        rescheduleModal?.addEventListener('click', function(event) {
+            if (event.target === rescheduleModal) {
+                closeRescheduleModal();
             }
         });
         
@@ -1573,14 +2060,15 @@
                         historyItem.className = 'history-item';
                         const date = new Date(item.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
                         const time = formatTime(item.time);
-                        const duration = item.duration;
+                        const duration = formatDuration(item.duration);
+                        const statusClass = item.status === 'Pending' ? 'status-pending' : item.status === 'Denied' ? 'status-denied' : item.status === 'Completed' ? 'status-completed' : 'status-upcoming';
                         historyItem.innerHTML = `
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
                                     <strong>${date}</strong> at ${time}
                                     <div style="font-size: 12px; color: var(--text-muted);">${duration}</div>
                                 </div>
-                                <span class="status-badge ${item.status === 'Completed' ? 'status-completed' : 'status-upcoming'}">${item.status}</span>
+                                <span class="status-badge ${statusClass}">${item.status}</span>
                             </div>
                         `;
                         historyContainer.appendChild(historyItem);
@@ -1608,13 +2096,168 @@
         // Initialize calendar on modal open
         generateCalendar();
 
+        // =====================================================================
+        // AJAX helper functions
+        // =====================================================================
+
+        // Update a schedule's status in the local array and re-render tables
+        function updateScheduleInList(id, newStatus) {
+            const idx = schedules.findIndex(s => s.id === id);
+            if (idx !== -1) schedules[idx].status = newStatus;
+            filteredSchedules = schedules.filter(s => s.status !== 'Completed' && s.status !== 'Denied');
+            renderScheduleTable();
+        }
+
+        // Simple toast notification
+        function showToastMsg(msg, type = 'success') {
+            const el = document.createElement('div');
+            el.style.cssText = `position:fixed;bottom:20px;right:20px;padding:14px 22px;border-radius:8px;color:white;font-weight:600;z-index:99999;backdrop-filter:blur(10px);transition:opacity 0.5s;`;
+            el.style.background = type === 'success' ? 'rgba(46,204,113,0.9)' : 'rgba(231,76,60,0.9)';
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 3000);
+        }
+
+        // Accept appointment via AJAX
+        async function acceptSchedule(id) {
+            const confirmed = await showConfirmModal('Accept Appointment', 'Are you sure you want to accept this appointment? The student will be notified.', 'Accept');
+            if (!confirmed) return;
+            try {
+                const resp = await fetch(`/scheduling/${id}/accept`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    updateScheduleInList(id, 'Upcoming');
+                    renderArchiveTable(); // refresh archive (removes from there if it was denied)
+                    showToastMsg('Appointment accepted. Student notified.');
+                }
+            } catch(e) { showToastMsg('Error accepting appointment.', 'error'); }
+        }
+
+        // Deny appointment via AJAX — moves row to archive in-place
+        async function denySchedule(id) {
+            const confirmed = await showConfirmModal('Deny Appointment', 'Are you sure you want to deny this appointment? The student will be notified.', 'Deny', true);
+            if (!confirmed) return;
+            try {
+                const resp = await fetch(`/scheduling/${id}/deny`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    updateScheduleInList(id, 'Denied'); // removes from upcoming
+                    renderArchiveTable(); // adds to archive
+                    showToastMsg('Appointment denied. Student notified.');
+                }
+            } catch(e) { showToastMsg('Error denying appointment.', 'error'); }
+        }
+
+        // Intercept reschedule form submit — do AJAX instead of page reload
+        document.getElementById('rescheduleForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!reschSelectedDate || !reschSelectedTime) {
+                showToastMsg('Please select a date and time.', 'error');
+                return;
+            }
+            const confirmed = await showConfirmModal('Propose Reschedule', 'Propose this new schedule to the student? They will need to accept or cancel it.', 'Propose', false);
+            if (!confirmed) return;
+            try {
+                const resp = await fetch(`/scheduling/${reschScheduleId}/reschedule`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ date: reschSelectedDate, time: reschSelectedTime })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    updateScheduleInList(reschScheduleId, 'Reschedule in Process');
+                    closeRescheduleModal();
+                    showToastMsg('Reschedule proposed. Student notified.');
+                }
+            } catch(e) { showToastMsg('Error proposing reschedule.', 'error'); }
+        });
+
+        // Poll for new pending schedule requests (for real-time red dot and table updates)
+        (function pollScheduleUpdates() {
+            let lastPendingCount = -1;
+            function check() {
+                fetch('/scheduling/pending-count')
+                    .then(r => r.json())
+                    .then(data => {
+                        // If count increased, refresh the table from server
+                        if (lastPendingCount !== -1 && data.count > lastPendingCount) {
+                            window.location.reload(); // reload to get new schedules into table
+                        }
+                        lastPendingCount = data.count;
+                    })
+                    .catch(() => {});
+            }
+            check();
+            setInterval(check, 10000); // check every 10 seconds
+        })();
+
         // Auto-mark schedules as done if past current date
+        async function acceptStudentReschedule(id) {
+            const confirmed = await showConfirmModal('Approve Reschedule', 'Approve the student\'s reschedule request? Their appointment will be moved to their proposed date.', 'Approve');
+            if (!confirmed) return;
+            try {
+                const resp = await fetch(`/scheduling/${id}/accept-student-reschedule`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    const idx = schedules.findIndex(s => s.id === id);
+                    if (idx !== -1) { schedules[idx].status = 'Upcoming'; schedules[idx].proposedDate = null; schedules[idx].proposedTime = null; }
+                    filterSchedules();
+                    showToast('Reschedule approved! Student notified.', 'success');
+                }
+            } catch(e) { showToast('Error approving reschedule.', 'error'); }
+        }
+
+        async function denyStudentReschedule(id) {
+            const confirmed = await showConfirmModal('Deny Reschedule', 'Deny the student\'s reschedule request? Their original appointment will remain.', 'Deny', true);
+            if (!confirmed) return;
+            try {
+                const resp = await fetch(`/scheduling/${id}/deny-student-reschedule`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    const idx = schedules.findIndex(s => s.id === id);
+                    if (idx !== -1) { schedules[idx].status = 'Upcoming'; schedules[idx].proposedDate = null; schedules[idx].proposedTime = null; }
+                    filterSchedules();
+                    showToast('Reschedule request denied. Student notified.', 'success');
+                }
+            } catch(e) { showToast('Error denying reschedule.', 'error'); }
+        }
+
         function autoCompletePastSchedules() {
-            const today = new Date();
+            const now = new Date();
             schedules.forEach(schedule => {
-                const scheduleDate = new Date(schedule.date);
-                if (scheduleDate < today && schedule.status !== 'Completed') {
-                    // Optionally, send an AJAX request to update status in backend
+                const scheduleDateTime = new Date(schedule.rawDate + 'T' + schedule.rawTime);
+                if (scheduleDateTime < now && schedule.status === 'Upcoming') {
                     schedule.status = 'Completed';
                 }
             });
