@@ -26,11 +26,11 @@ RUN chmod -R 775 storage bootstrap/cache
 EXPOSE 10000
 
 # Start app (DO ALL risky stuff here)
-CMD cp .env.example .env \
-    && php artisan key:generate \
+CMD if [ ! -f .env ]; then cp .env.example .env; fi \
+    && php artisan key:generate --force \
     && php artisan config:clear \
     && php artisan cache:clear \
     && php artisan route:clear \
     && php artisan view:clear \
     && php artisan migrate --force || true \
-    && php artisan serve --host=0.0.0.0 --port=$PORT
+    && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
